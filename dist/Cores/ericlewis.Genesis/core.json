@@ -1,0 +1,34 @@
+{
+    "core": {
+        "magic": "APF_VER_1",
+        "metadata": {
+            "platform_ids": ["genesis"],
+            "shortname": "Genesis",
+            "description": "Sega Genesis, known as the Mega Drive outside North America, is a 16-bit fourth-generation home video game console developed and sold by Sega.",
+            "author": "ericlewis",
+            "url": "https://github.com/ericlewis/openfpga-genesis",
+            "version": "0.0.1",
+            "date_release": "2022-09-22"
+        },
+        "framework": {
+            "target_product": "Analogue Pocket",
+            "version_required": "1.1",
+            "sleep_supported": false,
+            "dock": {
+                "supported": true,
+                "analog_output": false
+            },
+            "hardware": {
+                "link_port": false,
+                "cartridge_adapter": -1
+            }
+        },
+        "cores": [
+            {
+                "name": "default",
+                "id": 0,
+                "filename": "bitstream.rbf_r"
+            }
+        ]
+    }
+}

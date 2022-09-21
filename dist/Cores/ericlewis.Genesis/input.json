@@ -1,0 +1,52 @@
+{
+    "input": {
+      "magic": "APF_VER_1",
+      "controllers": [
+        {
+          "type": "default",
+          "mappings": [
+            {
+              "id": 1,
+              "name": "A Button",
+              "key": "pad_btn_y"
+            },
+            {
+              "id": 2,
+              "name": "B Button",
+              "key": "pad_btn_b"
+            },
+            {
+              "id": 3,
+              "name": "C Button",
+              "key": "pad_btn_a"
+            },
+            {
+              "id": 4,
+              "name": "X Button",
+              "key": "pad_trig_l"
+            },
+            {
+              "id": 5,
+              "name": "Y Button",
+              "key": "pad_btn_x"
+            },
+            {
+              "id": 6,
+              "name": "Z Button",
+              "key": "pad_trig_r"
+            },
+            {
+              "id": 7,
+              "name": "Start",
+              "key": "pad_btn_start"
+            },
+            {
+              "id": 8,
+              "name": "Mode",
+              "key": "pad_btn_select"
+            }
+          ]
+        }
+      ]
+    }
+  }

@@ -1,0 +1,14 @@
+{
+    "data": {
+        "magic": "APF_VER_1",
+        "data_slots": [
+            {
+                "name": "Cartridge",
+                "required": true,
+                "parameters": 257,
+                "extensions": ["md", "bin", "gen", "smd"],
+                "address": "0x10000000"
+            }
+        ]
+    }
+}
