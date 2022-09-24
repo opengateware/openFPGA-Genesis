@@ -669,6 +669,7 @@ wire [3:0] r, g, b;
 wire vs,hs;
 wire ce_pix;
 wire hblank, vblank_sys;
+wire [1:0] resolution;
 
 wire [7:0] color_lut[16] = '{
 	8'd0,   8'd27,  8'd49,  8'd71,
@@ -705,8 +706,13 @@ cofi coffee (
 	.blue_out(blue)
 );
 
-assign video_rgb_clock = clk_core_10_67;
-assign video_rgb_clock_90 = clk_core_10_67_90deg;
+reg [1:0] res;
+always @(posedge clk_sys) begin
+	reg old_vbl;
+
+	old_vbl <= vblank;
+	if(old_vbl & ~vblank) res <= resolution;
+end
 
 reg video_de_reg;
 reg video_hs_reg;
@@ -721,18 +727,13 @@ assign video_skip = 0;
 
 reg hs_prev;
 reg vs_prev;
-reg first_line = 0;
 
 always @(posedge clk_core_10_67) begin
     video_de_reg <= 0;
     video_rgb_reg <= 24'h0;
 
-	if (hs_prev) begin
-  		first_line <= 1;
-	end
-
     if (~(vblank_c || hblank_c)) begin
-        video_de_reg <= first_line && ~vblank_c && ~hblank_c;
+        video_de_reg <= 1;
         video_rgb_reg[23:16] <= red;
         video_rgb_reg[15:8]  <= green;
         video_rgb_reg[7:0]   <= blue;
@@ -1032,7 +1033,7 @@ system system
 	.CE_PIX(ce_pix),
 	.FIELD(),
 	.INTERLACE(),
-	.RESOLUTION(),
+	.RESOLUTION(resolution),
 	.FAST_FIFO(fifo_quirk),
 	.SVP_QUIRK(svp_quirk),
 	.SCHAN_QUIRK(schan_quirk),
@@ -1106,6 +1107,8 @@ system system
 
     wire    clk_core_10_67;
     wire    clk_core_10_67_90deg;
+	wire    clk_core_5_36;
+    wire    clk_core_5_36_90deg;
     wire    clk_sys;
     wire    clk_ram;
     
@@ -1119,6 +1122,8 @@ mf_pllbase mp1 (
     .outclk_1       ( clk_core_10_67_90deg ),
     .outclk_2       ( clk_sys ),
     .outclk_3       ( clk_ram ),
+	.outclk_4       ( clk_core_5_36 ),
+    .outclk_5       ( clk_core_5_36_90deg ),
     
     .locked         ( pll_core_locked )
 );
