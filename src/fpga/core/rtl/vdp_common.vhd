@@ -78,11 +78,11 @@ constant V_DISP_START_PAL_V28   : integer := 458;
 constant V_DISP_START_NTSC_V28  : integer := 485; -- -27;
 constant V_DISP_START_V30       : integer := 466; -- -46
 
-constant V_DISP_HEIGHT_V28      : integer := 224;
-constant V_DISP_HEIGHT_V30      : integer := 240;
+constant V_DISP_HEIGHT_V28      : integer := 225;
+constant V_DISP_HEIGHT_V30      : integer := 241;
 
-constant V_INT_V28              : integer := 224;
-constant V_INT_V30              : integer := 240;
+constant V_INT_V28              : integer := 225;
+constant V_INT_V30              : integer := 241;
 
 constant VSYNC_START_PAL_V28	: integer := 458;
 constant VSYNC_START_PAL_V30	: integer := 466;

@@ -304,6 +304,9 @@ always @(*) begin
     default: begin
         bridge_rd_data <= 0;
     end
+		32'h0: begin
+			bridge_rd_data <= blank_count;
+		end
     32'hF8xxxxxx: begin
         bridge_rd_data <= cmd_bridge_rd_data;
     end
@@ -623,9 +626,9 @@ end
 
 data_loader #(
 	.ADDRESS_MASK_UPPER_4(1),
-    .ADDRESS_SIZE(25),
+  .ADDRESS_SIZE(25),
 	.WRITE_MEM_CLOCK_DELAY(12),
-	.WRITE_MEM_EN_CYCLE_LENGTH(3),
+	.WRITE_MEM_EN_CYCLE_LENGTH(2),
 	.OUTPUT_WORD_SIZE(2)
 ) rom_loader (
     .clk_74a(clk_74a),
@@ -687,9 +690,13 @@ assign video_skip = 0;
 
 reg hs_prev;
 reg vs_prev;
+reg [2:0] hs_delay;
+
+reg [10:0] blank_count;
 
 always @(posedge clk_core_10_67) begin
     video_de_reg <= 0;
+		video_hs_reg  <= 0;
     video_rgb_reg <= 24'h0;
 
     if (~(vblank_sys || hblank)) begin
@@ -699,7 +706,26 @@ always @(posedge clk_core_10_67) begin
         video_rgb_reg[7:0]   <= {2{b}};
     end
 
-    video_hs_reg <= ~hs_prev && hs;
+		if (video_vs_reg) begin
+			blank_count <= 0;
+		end else if (video_hs_reg && ~(vblank_sys)) begin
+			blank_count <= blank_count + 1;
+		end
+
+		if (hs_delay > 0) begin
+      hs_delay <= hs_delay - 1;
+    end
+
+    if (hs_delay == 1) begin
+      video_hs_reg <= 1;
+    end
+
+    if (~hs_prev && hs) begin
+      // HSync went high. Delay by 3 cycles to prevent overlapping with VSync
+      hs_delay <= 7;
+    end
+
+    // video_hs_reg <= ~hs_prev && hs;
     video_vs_reg <= ~vs_prev && vs;
     hs_prev <= hs;
     vs_prev <= vs;
@@ -716,7 +742,7 @@ sdram sdram
 	.SDRAM_DQML(dram_dqm[0]),   // byte mask
 	.SDRAM_DQMH(dram_dqm[1]),   // byte mask
     .SDRAM_BA(dram_ba),      // two banks
-	.SDRAM_nCS(1'b0),        // a single chip select
+	// .SDRAM_nCS(1'b0),        // a single chip select
 	.SDRAM_nWE(dram_we_n),   // write enable
 	.SDRAM_nRAS(dram_ras_n), // row address select
 	.SDRAM_nCAS(dram_cas_n), // columns address select
@@ -727,6 +753,7 @@ sdram sdram
 	.clk(clk_ram),
 
 	.addr0(ioctl_addr[24:1]),
+	// 68k is big endian, so reverse the bytes
 	.din0({ioctl_data[7:0], ioctl_data[15:8]}),
 	.dout0(),
 	.wrl0(1),
@@ -1067,8 +1094,6 @@ system system
 
     wire    clk_core_10_67;
     wire    clk_core_10_67_90deg;
-	wire    clk_core_5_36;
-    wire    clk_core_5_36_90deg;
     wire    clk_sys;
     wire    clk_ram;
     
@@ -1082,8 +1107,6 @@ mf_pllbase mp1 (
     .outclk_1       ( clk_core_10_67_90deg ),
     .outclk_2       ( clk_sys ),
     .outclk_3       ( clk_ram ),
-	.outclk_4       ( clk_core_5_36 ),
-    .outclk_5       ( clk_core_5_36_90deg ),
     
     .locked         ( pll_core_locked )
 );
