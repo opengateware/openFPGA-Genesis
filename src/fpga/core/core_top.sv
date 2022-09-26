@@ -570,37 +570,6 @@ always @(posedge clk_74a) begin
     else if (dataslot_allcomplete) ioctl_download <= 0;
 end
 
-///////////////////////////////////////////////////
-// Game Genie Code loading for WIDE IO (16 bit)
-reg [128:0] gg_code;
-wire        gg_available;
-
-// Code layout:
-// {clock bit, code flags,     32'b address, 32'b compare, 32'b replace}
-//  128        127:96          95:64         63:32         31:0
-// Integer values are in BIG endian byte order, so it up to the loader
-// or generator of the code to re-arrange them correctly.
-
-always_ff @(posedge clk_sys) begin
-	gg_code[128] <= 1'b0;
-
-	if (code_download & ioctl_wr) begin
-		case (ioctl_addr[3:0])
-			0:  gg_code[111:96]  <= ioctl_data; // Flags Bottom Word
-			2:  gg_code[127:112] <= ioctl_data; // Flags Top Word
-			4:  gg_code[79:64]   <= ioctl_data; // Address Bottom Word
-			6:  gg_code[95:80]   <= ioctl_data; // Address Top Word
-			8:  gg_code[47:32]   <= ioctl_data; // Compare Bottom Word
-			10: gg_code[63:48]   <= ioctl_data; // Compare top Word
-			12: gg_code[15:0]    <= ioctl_data; // Replace Bottom Word
-			14: begin
-				gg_code[31:16]   <= ioctl_data; // Replace Top Word
-				gg_code[128]     <=  1'b1;      // Clock it in
-			end
-		endcase
-	end
-end
-
 reg  rom_wr;
 wire sdrom_wrack;
 reg [24:0] rom_sz;
@@ -624,7 +593,7 @@ end
 data_loader #(
 	.ADDRESS_MASK_UPPER_4(1),
     .ADDRESS_SIZE(25),
-	.WRITE_MEM_CLOCK_DELAY(12),
+	.WRITE_MEM_CLOCK_DELAY(16),
 	.WRITE_MEM_EN_CYCLE_LENGTH(3),
 	.OUTPUT_WORD_SIZE(2)
 ) rom_loader (
