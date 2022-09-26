@@ -624,7 +624,7 @@ end
 data_loader #(
 	.ADDRESS_MASK_UPPER_4(1),
     .ADDRESS_SIZE(25),
-	.WRITE_MEM_CLOCK_DELAY(4),
+	.WRITE_MEM_CLOCK_DELAY(12),
 	.OUTPUT_WORD_SIZE(2)
 ) rom_loader (
     .clk_74a(clk_74a),
@@ -666,44 +666,9 @@ sound_i2s #(
 ///////////////////////////////////////////////
 
 wire [3:0] r, g, b;
-wire vs,hs;
+wire vs, hs;
 wire ce_pix;
 wire hblank, vblank_sys;
-
-wire [7:0] color_lut[16] = '{
-	8'd0,   8'd27,  8'd49,  8'd71,
-	8'd87,  8'd103, 8'd119, 8'd130,
-	8'd146, 8'd157, 8'd174, 8'd190,
-	8'd206, 8'd228, 8'd255, 8'd255
-};
-
-reg old_ce_pix;
-always @(posedge clk_ram) old_ce_pix <= ce_pix;
-
-wire [7:0] red, green, blue;
-wire hs_c, vs_c, hblank_c, vblank_c;
-
-cofi coffee (
-	.clk(clk_sys),
-	.pix_ce(ce_pix),
-	.enable(1),
-
-	.hblank(hblank),
-	.vblank(vblank_sys),
-	.hs(hs),
-	.vs(vs),
-	.red(color_lut[r]),
-	.green(color_lut[g]),
-	.blue(color_lut[b]),
-
-	.hblank_out(hblank_c),
-	.vblank_out(vblank_c),
-	.hs_out(hs_c),
-	.vs_out(vs_c),
-	.red_out(red),
-	.green_out(green),
-	.blue_out(blue)
-);
 
 reg video_de_reg;
 reg video_hs_reg;
@@ -726,17 +691,17 @@ always @(posedge clk_core_10_67) begin
     video_de_reg <= 0;
     video_rgb_reg <= 24'h0;
 
-    if (~(vblank_c || hblank_c)) begin
+    if (~(vblank_sys || hblank)) begin
         video_de_reg <= 1;
-        video_rgb_reg[23:16] <= red;
-        video_rgb_reg[15:8]  <= green;
-        video_rgb_reg[7:0]   <= blue;
+        video_rgb_reg[23:16] <= {2{r}};
+        video_rgb_reg[15:8]  <= {2{g}};
+        video_rgb_reg[7:0]   <= {2{b}};
     end
 
-    video_hs_reg <= ~hs_prev && hs_c;
-    video_vs_reg <= ~vs_prev && vs_c;
-    hs_prev <= hs_c;
-    vs_prev <= vs_c;
+    video_hs_reg <= ~hs_prev && hs;
+    video_vs_reg <= ~vs_prev && vs;
+    hs_prev <= hs;
+    vs_prev <= vs;
 end
 
 ///////////////////////////////////////////////
