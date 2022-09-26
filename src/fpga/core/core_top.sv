@@ -625,6 +625,7 @@ data_loader #(
 	.ADDRESS_MASK_UPPER_4(1),
     .ADDRESS_SIZE(25),
 	.WRITE_MEM_CLOCK_DELAY(12),
+	.WRITE_MEM_EN_CYCLE_LENGTH(3),
 	.OUTPUT_WORD_SIZE(2)
 ) rom_loader (
     .clk_74a(clk_74a),
