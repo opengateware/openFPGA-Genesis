@@ -669,7 +669,6 @@ wire [3:0] r, g, b;
 wire vs,hs;
 wire ce_pix;
 wire hblank, vblank_sys;
-wire [1:0] resolution;
 
 wire [7:0] color_lut[16] = '{
 	8'd0,   8'd27,  8'd49,  8'd71,
@@ -706,18 +705,13 @@ cofi coffee (
 	.blue_out(blue)
 );
 
-reg [1:0] res;
-always @(posedge clk_sys) begin
-	reg old_vbl;
-
-	old_vbl <= vblank;
-	if(old_vbl & ~vblank) res <= resolution;
-end
-
 reg video_de_reg;
 reg video_hs_reg;
 reg video_vs_reg;
 reg [23:0] video_rgb_reg;
+
+assign video_rgb_clock = clk_core_10_67;
+assign video_rgb_clock_90 = clk_core_10_67_90deg;
 
 assign video_de = video_de_reg;
 assign video_hs = video_hs_reg;
@@ -1033,7 +1027,7 @@ system system
 	.CE_PIX(ce_pix),
 	.FIELD(),
 	.INTERLACE(),
-	.RESOLUTION(resolution),
+	.RESOLUTION(),
 	.FAST_FIFO(fifo_quirk),
 	.SVP_QUIRK(svp_quirk),
 	.SCHAN_QUIRK(schan_quirk),
