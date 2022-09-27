@@ -304,12 +304,6 @@ always @(*) begin
     default: begin
         bridge_rd_data <= 0;
     end
-        32'hFD000000: begin
-            bridge_rd_data <= bridge_read_buffer;
-        end
-        32'hFE000000: begin
-            bridge_rd_data <= bridge_read_buffer;
-        end
     32'hF8xxxxxx: begin
         bridge_rd_data <= cmd_bridge_rd_data;
     end
@@ -597,7 +591,7 @@ end
 
 data_loader #(
 	.ADDRESS_MASK_UPPER_4(1),
-    .ADDRESS_SIZE(25),
+    .ADDRESS_SIZE(24),
 	.WRITE_MEM_CLOCK_DELAY(16),
 	.WRITE_MEM_EN_CYCLE_LENGTH(3),
 	.OUTPUT_WORD_SIZE(2)
@@ -640,20 +634,17 @@ sound_i2s #(
 // Video
 ///////////////////////////////////////////////
 
+wire [7:0] color_lut[16] = '{
+	8'd0,   8'd27,  8'd49,  8'd71,
+	8'd87,  8'd103, 8'd119, 8'd130,
+	8'd146, 8'd157, 8'd174, 8'd190,
+	8'd206, 8'd228, 8'd255, 8'd255
+};
+
 reg         interlaced;
 wire        interlaced_s;
 reg   [1:0] resolution;
 wire  [1:0] resolution_s;
-reg  [31:0] bridge_read_buffer; //! Buffer for the next read request
-always @(posedge clk_74a) begin
-    if(bridge_rd) begin
-        casex(bridge_addr)
-            32'hFD000000: begin
-                bridge_read_buffer <= resolution;
-            end
-        endcase
-    end
-end
 
 wire [3:0] r, g, b;
 wire vs, hs;
@@ -670,16 +661,16 @@ reg current_pix_clk_90;
 
 always @(*) begin
     if(resolution == 2'b00) begin
-        current_pix_clk = clk_vid_256;
-        current_pix_clk_90 = clk_vid_256_90deg;
+        current_pix_clk <= clk_vid_256;
+        current_pix_clk_90 <= clk_vid_256_90deg;
     end
     else if(resolution == 2'b01 && interlaced) begin
-        current_pix_clk = clk_vid_448i;
-        current_pix_clk_90 = clk_vid_448i_90deg;
+        current_pix_clk <= clk_vid_448i;
+        current_pix_clk_90 <= clk_vid_448i_90deg;
     end
     else begin
-        current_pix_clk = clk_vid_320;
-        current_pix_clk_90 = clk_vid_320_90deg;
+        current_pix_clk <= clk_vid_320;
+        current_pix_clk_90 <= clk_vid_320_90deg;
     end
 end
 
@@ -715,9 +706,9 @@ always @(posedge current_pix_clk) begin
 
     if (~(vblank_sys || hblank)) begin
         video_de_reg <= 1;
-        video_rgb_reg[23:16] <= {2{r}};
-        video_rgb_reg[15:8]  <= {2{g}};
-        video_rgb_reg[7:0]   <= {2{b}};
+        video_rgb_reg[23:16] <= color_lut[r];
+        video_rgb_reg[15:8]  <= color_lut[g];
+        video_rgb_reg[7:0]   <= color_lut[b];
     end
 
     video_hs_reg <= ~hs_prev && hs;
@@ -1018,11 +1009,6 @@ system system
 	.FAST_FIFO(fifo_quirk),
 	.SVP_QUIRK(svp_quirk),
 	.SCHAN_QUIRK(schan_quirk),
-
-	.GG_RESET(code_download && ioctl_wr && !ioctl_addr),
-	.GG_EN(0),
-	.GG_CODE(gg_code),
-	.GG_AVAILABLE(gg_available),
 
 	.J3BUT(0),
 	.JOY_1(joystick_0),

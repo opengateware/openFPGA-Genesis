@@ -3,13 +3,6 @@
         "magic": "APF_VER_1",
         "variables": [
             {
-                "name": "Res:",
-                "id": 1,
-                "type": "number_u32",
-                "enabled": false,
-                "address": "0xFD000000"
-            },
-            {
                 "name": "Show Border",
                 "id": 10,
                 "type": "check",
