@@ -304,11 +304,16 @@ always @(*) begin
     default: begin
         bridge_rd_data <= 0;
     end
+        32'hFD000000: begin
+            bridge_rd_data <= bridge_read_buffer;
+        end
+        32'hFE000000: begin
+            bridge_rd_data <= bridge_read_buffer;
+        end
     32'hF8xxxxxx: begin
         bridge_rd_data <= cmd_bridge_rd_data;
     end
     endcase
-
 	if (bridge_addr[31:28] == 4'h6) begin
       bridge_rd_data <= sd_read_data;
     end
@@ -635,6 +640,21 @@ sound_i2s #(
 // Video
 ///////////////////////////////////////////////
 
+reg         interlaced;
+wire        interlaced_s;
+reg   [1:0] resolution;
+wire  [1:0] resolution_s;
+reg  [31:0] bridge_read_buffer; //! Buffer for the next read request
+always @(posedge clk_74a) begin
+    if(bridge_rd) begin
+        casex(bridge_addr)
+            32'hFD000000: begin
+                bridge_read_buffer <= resolution;
+            end
+        endcase
+    end
+end
+
 wire [3:0] r, g, b;
 wire vs, hs;
 wire ce_pix;
@@ -645,8 +665,26 @@ reg video_hs_reg;
 reg video_vs_reg;
 reg [23:0] video_rgb_reg;
 
-assign video_rgb_clock = clk_core_10_67;
-assign video_rgb_clock_90 = clk_core_10_67_90deg;
+reg current_pix_clk;
+reg current_pix_clk_90;
+
+always @(*) begin
+    if(resolution == 2'b00) begin
+        current_pix_clk = clk_vid_256;
+        current_pix_clk_90 = clk_vid_256_90deg;
+    end
+    else if(resolution == 2'b01 && interlaced) begin
+        current_pix_clk = clk_vid_448i;
+        current_pix_clk_90 = clk_vid_448i_90deg;
+    end
+    else begin
+        current_pix_clk = clk_vid_320;
+        current_pix_clk_90 = clk_vid_320_90deg;
+    end
+end
+
+assign video_rgb_clock = current_pix_clk;
+assign video_rgb_clock_90 = current_pix_clk_90;
 
 assign video_de = video_de_reg;
 assign video_hs = video_hs_reg;
@@ -657,9 +695,23 @@ assign video_skip = 0;
 reg hs_prev;
 reg vs_prev;
 
-always @(posedge clk_core_10_67) begin
+synch_3 #(.WIDTH(2)) sv2(resolution, resolution_s, current_pix_clk);
+synch_3 sv3(interlaced, interlaced_s, current_pix_clk);
+
+always @(posedge current_pix_clk) begin
     video_de_reg <= 0;
-    video_rgb_reg <= 24'h0;
+
+    // Set Video Mode by Index
+    case(resolution_s)
+        2'b00: begin video_rgb_reg <= 24'h0;                end               // [0] 256 x 224
+        2'b01: begin
+            if(interlaced_s) begin video_rgb_reg <= {11'd4, 10'b0, 3'b0}; end // [4] 320 x 448
+            else             begin video_rgb_reg <= {11'd1, 10'b0, 3'b0}; end // [1] 320 x 224
+        end 
+        2'b10: begin video_rgb_reg <= {11'd2, 10'b0, 3'b0}; end               // [2] 256 x 240
+        2'b11: begin video_rgb_reg <= {11'd3, 10'b0, 3'b0}; end               // [3] 320 x 240
+    endcase
+
 
     if (~(vblank_sys || hblank)) begin
         video_de_reg <= 1;
@@ -961,8 +1013,8 @@ system system
 	.CRAM_DOTS(cs_video_cram_dots_enable),
 	.CE_PIX(ce_pix),
 	.FIELD(),
-	.INTERLACE(),
-	.RESOLUTION(),
+	.INTERLACE(interlaced),
+	.RESOLUTION(resolution),
 	.FAST_FIFO(fifo_quirk),
 	.SVP_QUIRK(svp_quirk),
 	.SCHAN_QUIRK(schan_quirk),
@@ -1033,28 +1085,32 @@ system system
 
 ///////////////////////////////////////////////
 
-
-    wire    clk_core_10_67;
-    wire    clk_core_10_67_90deg;
-	wire    clk_core_5_36;
-    wire    clk_core_5_36_90deg;
     wire    clk_sys;
     wire    clk_ram;
-    
+    wire    clk_vid_320;
+    wire    clk_vid_320_90deg;
+    wire    clk_vid_256;
+    wire    clk_vid_256_90deg;
+    wire    clk_vid_448i;
+    wire    clk_vid_448i_90deg;
+
     wire    pll_core_locked;
-    
-mf_pllbase mp1 (
-    .refclk         ( clk_74a ),
-    .rst            ( 0 ),
-    
-    .outclk_0       ( clk_core_10_67 ),
-    .outclk_1       ( clk_core_10_67_90deg ),
-    .outclk_2       ( clk_sys ),
-    .outclk_3       ( clk_ram ),
-	.outclk_4       ( clk_core_5_36 ),
-    .outclk_5       ( clk_core_5_36_90deg ),
-    
-    .locked         ( pll_core_locked )
-);
+
+    mf_pllbase
+        mp1 (
+            .refclk   ( clk_74a            ),
+            .rst      ( 0                  ),
+
+            .outclk_0 ( clk_sys            ),
+            .outclk_1 ( clk_ram            ),
+            .outclk_2 ( clk_vid_320        ),
+            .outclk_3 ( clk_vid_320_90deg  ),
+            .outclk_4 ( clk_vid_256        ),
+            .outclk_5 ( clk_vid_256_90deg  ),
+            .outclk_6 ( clk_vid_448i       ),
+            .outclk_7 ( clk_vid_448i_90deg ),
+
+            .locked   ( pll_core_locked    )
+        );
     
 endmodule
