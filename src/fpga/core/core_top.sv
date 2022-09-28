@@ -304,6 +304,9 @@ always @(*) begin
     default: begin
         bridge_rd_data <= 0;
     end
+	32'h00000000: begin
+        bridge_rd_data <= rom_sz;
+    end
     32'hF8xxxxxx: begin
         bridge_rd_data <= cmd_bridge_rd_data;
     end
@@ -418,39 +421,13 @@ core_bridge_cmd icb (
     .datatable_addr         ( datatable_addr ),
     .datatable_wren         ( datatable_wren ),
     .datatable_data         ( datatable_data ),
-    .datatable_q            ( datatable_q ),
+    .datatable_q            ( datatable_q )
 
 );
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Core Settings
 ///////////////////////////////////////////////
-
-// CPU settings
-// reg cs_cpu_turbo = 0;
-
-// Video settings
-reg cs_video_border_enable = 0;
-reg cs_video_cram_dots_enable = 0;
-reg cs_video_high_sprite_limit_enable = 1;
-
-// Audio settings
-// reg cs_audio_audio_filter = 0;
-// reg cs_audio_fm_chip = 0;
-reg cs_audio_hifi_pcm_enable = 1;
-reg cs_audio_fm_enable = 1;
-
-always @(posedge clk_74a) begin
-	if (bridge_wr) begin
-		casex(bridge_addr)
-			32'h00000000: cs_video_border_enable 			 <= bridge_wr_data[0];
-			32'h00000004: cs_video_cram_dots_enable 		 <= bridge_wr_data[0];
-			32'h00000008: cs_video_high_sprite_limit_enable  <= bridge_wr_data[0];
-			32'h00000010: cs_audio_hifi_pcm_enable 			 <= bridge_wr_data[0];
-			32'h00000014: cs_audio_fm_enable				 <= bridge_wr_data[0];
-		endcase
-	end
-end
 
 ///////////////////////////////////////////////
 // Save/Load
@@ -464,136 +441,120 @@ wire  [7:0] sd_buff_addr_out;
 wire [15:0] sd_buff_dout;
 wire [15:0] sd_buff_din;
 wire        sd_buff_wr;
-wire        img_mounted;
-wire        img_readonly;
-wire [63:0] img_size;
 wire [31:0] sd_read_data;
 
-wire downloading = cart_download;
-
 reg bk_ena = 0;
-reg sav_pending = 0;
-wire bk_change;
+reg bk_change = 0;
 
-always @(posedge clk_sys) begin
-	reg old_change = 0;
-	// if (downloading) bk_ena <= 1;
-	if (~svp_quirk) bk_ena <= 1;
+data_unloader #(
+	.ADDRESS_MASK_UPPER_4(4'h6),
+	.ADDRESS_SIZE(8),
+	.READ_MEM_CLOCK_DELAY(7),
+	.INPUT_WORD_SIZE(2)
+) save_data_unloader (
+	.clk_74a(clk_74a),
+	.clk_memory(clk_sys),
 
-	old_change <= bk_change;
-	if (~old_change & bk_change & ~osnotify_inmenu_s) sav_pending <= 1'b1; // (auto-save flag, needs interact)
-	else if (bk_state) sav_pending <= 0;
-end
+	.bridge_rd(bridge_rd),
+	.bridge_endian_little(bridge_endian_little),
+	.bridge_addr(bridge_addr),
+	.bridge_rd_data(sd_read_data),
 
-// data_unloader #(
-// 	.ADDRESS_MASK_UPPER_4(4'h6),
-// 	.ADDRESS_SIZE(8),
-// 	.READ_MEM_CLOCK_DELAY(4),
-// 	.INPUT_WORD_SIZE(2)
-// ) save_data_unloader (
-// 	.clk_74a(clk_74a),
-// 	.clk_memory(clk_sys),
+	.read_en  (sd_rd),
+	.read_addr(sd_buff_addr_out),
+	.read_data(sd_buff_din)
+);
 
-// 	.bridge_rd(bridge_rd),
-// 	.bridge_endian_little(bridge_endian_little),
-// 	.bridge_addr(bridge_addr),
-// 	.bridge_rd_data(sd_read_data),
-
-// 	.read_en  (sd_rd),
-// 	.read_addr(sd_buff_addr_out),
-// 	.read_data(sd_buff_din)
-// );
-
-wire bk_load    = 1'b0; // manual load (I think?)
-wire bk_save    = sav_pending & osnotify_inmenu_s;
 reg  bk_loading = 0;
 reg  bk_state   = 0;
-
-always @(posedge clk_sys) begin
-	reg old_downloading = 0;
-	reg old_load = 0, old_save = 0, old_ack;
-
-	old_downloading <= downloading;
-
-	old_load <= bk_load;
-	old_save <= bk_save;
-	old_ack  <= sd_ack;
-
-	if(~old_ack & sd_ack) {sd_rd, sd_wr} <= 0;
-
-	if(!bk_state) begin
-		if(bk_ena & ((~old_load & bk_load) | (~old_save & bk_save))) begin
-			bk_state <= 1;
-			bk_loading <= bk_load;
-			sd_lba <= 0;
-			sd_rd <=  bk_load;
-			sd_wr <= ~bk_load;
-		end
-		if(old_downloading & ~downloading & |img_size & bk_ena) begin
-			bk_state <= 1;
-			bk_loading <= 1;
-			sd_lba <= 0;
-			sd_rd <= 1;
-			sd_wr <= 0;
-		end
-	end else begin
-		if(old_ack & ~sd_ack) begin
-			if(&sd_lba[6:0]) begin
-				bk_loading <= 0;
-				bk_state <= 0;
-			end else begin
-				sd_lba <= sd_lba + 1'd1;
-				sd_rd  <=  bk_loading;
-				sd_wr  <= ~bk_loading;
-			end
-		end
-	end
-end
 
 ///////////////////////////////////////////////
 // ROM
 ///////////////////////////////////////////////
 
-wire        ioctl_download;
+reg         ioctl_download = 0;
 wire        ioctl_wr;
 wire [24:0] ioctl_addr;
 wire [15:0] ioctl_data;
 reg         ioctl_wait;
 
-wire 		cart_download = ioctl_download;
-wire 		code_download = 0;
+wire 		cart_download;
 
+synch_2 cart_download_s (
+	ioctl_download,
+	cart_download,
+	clk_sys
+);
 
-always @(posedge clk_74a) begin
+always_ff @(posedge clk_74a) begin
     if (dataslot_requestwrite) ioctl_download <= 1;
     else if (dataslot_allcomplete) ioctl_download <= 0;
 end
 
-reg  rom_wr;
 wire sdrom_wrack;
 reg [24:0] rom_sz;
-
-always @(posedge clk_sys) begin
-	reg old_download, old_reset;
+always_ff @(posedge clk_sys) begin
+	reg old_download;
 	old_download <= cart_download;
-	old_reset <= ~reset_n;
 
-	if(~old_reset && ~reset_n) ioctl_wait <= 0;
-	if (old_download & ~cart_download) rom_sz <= ioctl_addr[24:0];
+	if (old_download & ~cart_download) rom_sz <= (ioctl_addr[24:0]);
+end
 
-	if (cart_download & ioctl_wr) begin
-		ioctl_wait <= 1;
-		rom_wr <= ~rom_wr;
-	end else if(ioctl_wait && (rom_wr == sdrom_wrack)) begin
-		ioctl_wait <= 0;
+reg  [1:0] region_req;
+reg        region_set = 0;
+always_ff @(posedge clk_sys) begin
+	reg old_ready = 0;
+
+	old_ready <= cart_hdr_ready;
+	if(~old_ready & cart_hdr_ready) begin
+			region_set <= 1;
+			if(hdr_u) region_req <= 1;
+			else if(hdr_e) region_req <= 2;
+			else if(hdr_j) region_req <= 0;
+			else region_req <= 1;
+	end
+
+	if(old_ready & ~cart_hdr_ready) region_set <= 0;
+end
+
+wire [3:0] hrgn = ioctl_data[3:0] - 4'd7;
+
+reg cart_hdr_ready = 0;
+reg hdr_j=0,hdr_u=0,hdr_e=0;
+always_ff @(posedge clk_sys) begin
+	reg old_download;
+	old_download <= cart_download;
+
+	if(~old_download && cart_download) {hdr_j,hdr_u,hdr_e} <= 0;
+	if(old_download && ~cart_download) cart_hdr_ready <= 0;
+
+	if(ioctl_wr & cart_download) begin
+		if(ioctl_addr == 'h1F0) begin
+			if(ioctl_data[7:0] == "J") hdr_j <= 1;
+			else if(ioctl_data[7:0] == "U") hdr_u <= 1;
+			else if(ioctl_data[7:0] == "E") hdr_e <= 1;
+			else if(ioctl_data[7:0] >= "0" && ioctl_data[7:0] <= "9") {hdr_e, hdr_u, hdr_j} <= {ioctl_data[3], ioctl_data[2], ioctl_data[0]};
+			else if(ioctl_data[7:0] >= "A" && ioctl_data[7:0] <= "F") {hdr_e, hdr_u, hdr_j} <= {      hrgn[3],       hrgn[2],       hrgn[0]};
+		end
+		if(ioctl_addr == 'h1F2) begin
+			if(ioctl_data[7:0] == "J") hdr_j <= 1;
+			else if(ioctl_data[7:0] == "U") hdr_u <= 1;
+			else if(ioctl_data[7:0] == "E") hdr_e <= 1;
+		end
+		if(ioctl_addr == 'h1F0) begin
+			if(ioctl_data[15:8] == "J") hdr_j <= 1;
+			else if(ioctl_data[15:8] == "U") hdr_u <= 1;
+			else if(ioctl_data[15:8] == "E") hdr_e <= 1;
+		end
+		if(ioctl_addr == 'h200) cart_hdr_ready <= 1;
 	end
 end
 
 data_loader #(
-	.ADDRESS_MASK_UPPER_4(1),
-    .ADDRESS_SIZE(24),
-	.WRITE_MEM_CLOCK_DELAY(16),
-	.WRITE_MEM_EN_CYCLE_LENGTH(3),
+	.ADDRESS_MASK_UPPER_4(4'h1),
+    .ADDRESS_SIZE(25),
+	.WRITE_MEM_CLOCK_DELAY(24),
+	.WRITE_MEM_EN_CYCLE_LENGTH(4),
 	.OUTPUT_WORD_SIZE(2)
 ) rom_loader (
     .clk_74a(clk_74a),
@@ -689,7 +650,7 @@ reg vs_prev;
 synch_3 #(.WIDTH(2)) sv2(resolution, resolution_s, current_pix_clk);
 synch_3 sv3(interlaced, interlaced_s, current_pix_clk);
 
-always @(posedge current_pix_clk) begin
+always_ff @(posedge current_pix_clk) begin
     video_de_reg <= 0;
 
     // Set Video Mode by Index
@@ -723,27 +684,15 @@ end
 
 sdram sdram
 (
-	.SDRAM_DQ(dram_dq),      // 16 bit bidirectional data bus
-	.SDRAM_A(dram_a),        // 13 bit multiplexed address bus
-	.SDRAM_DQML(dram_dqm[0]),   // byte mask
-	.SDRAM_DQMH(dram_dqm[1]),   // byte mask
-    .SDRAM_BA(dram_ba),      // two banks
-	.SDRAM_nCS(1'b0),        // a single chip select
-	.SDRAM_nWE(dram_we_n),   // write enable
-	.SDRAM_nRAS(dram_ras_n), // row address select
-	.SDRAM_nCAS(dram_cas_n), // columns address select
-	.SDRAM_CLK(dram_clk),
-	.SDRAM_CKE(dram_cke),
-
 	.init(~pll_core_locked),
 	.clk(clk_ram),
 
-	.addr0(ioctl_addr[24:1]),
+	.addr0(cart_download ? ioctl_addr[24:1] : rom_sz),
 	.din0({ioctl_data[7:0], ioctl_data[15:8]}),
 	.dout0(),
 	.wrl0(1),
 	.wrh0(1),
-	.req0(rom_wr),
+	.req0(ioctl_wr),
 	.ack0(sdrom_wrack),
 
 	.addr1(rom_addr),
@@ -754,13 +703,26 @@ sdram sdram
 	.req1(rom_req),
 	.ack1(sdrom_rdack),
 
-	.addr2(0),
-	.din2(0),
-	.dout2(),
+	.addr2(rom_addr2),
+	.din2(),
+	.dout2(rom_data2),
 	.wrl2(0),
 	.wrh2(0),
-	.req2(0),
-	.ack2()
+	.req2(rom_rd2),
+	.ack2(rom_rdack2),
+
+	// SDRAM <-> APF
+	.SDRAM_DQ(dram_dq),      // 16 bit bidirectional data bus
+	.SDRAM_A(dram_a),        // 13 bit multiplexed address bus
+	.SDRAM_DQML(dram_dqm[0]),   // byte mask
+	.SDRAM_DQMH(dram_dqm[1]),   // byte mask
+    .SDRAM_BA(dram_ba),      // two banks
+	.SDRAM_nCS(1'b0),        // a single chip select
+	.SDRAM_nWE(dram_we_n),   // write enable
+	.SDRAM_nRAS(dram_ras_n), // row address select
+	.SDRAM_nCAS(dram_cas_n), // columns address select
+	.SDRAM_CLK(dram_clk),
+	.SDRAM_CKE(dram_cke)
 );
 
 wire [24:1] rom_addr, rom_addr2;
@@ -780,7 +742,7 @@ reg schan_quirk = 0;
 reg gun_type = 0;
 reg [7:0] gun_sensor_delay = 8'd44;
 
-always @(posedge clk_sys) begin
+always_ff @(posedge clk_sys) begin
 	reg [63:0] cart_id;
 	
 	if(cart_download) begin
@@ -870,7 +832,7 @@ wire [15:0] cont2_key_s;
 wire [15:0] cont3_key_s;
 wire [15:0] cont4_key_s;
 
-synch_2 #(
+synch_3 #(
     .WIDTH(16)
 ) cont1_s (
     cont1_key,
@@ -878,7 +840,7 @@ synch_2 #(
     clk_sys
 );
 
-synch_2 #(
+synch_3 #(
     .WIDTH(16)
 ) cont2_s (
     cont2_key,
@@ -886,7 +848,7 @@ synch_2 #(
     clk_sys
 );
 
-synch_2 #(
+synch_3 #(
     .WIDTH(16)
 ) cont3_s (
     cont3_key,
@@ -894,7 +856,7 @@ synch_2 #(
     clk_sys
 );
 
-synch_2 #(
+synch_3 #(
     .WIDTH(16)
 ) cont4_s (
     cont4_key,
@@ -967,19 +929,21 @@ assign joystick_3 = {
 ///////////////////////////////////////////////
 
 wire osnotify_inmenu_s;
-synch_2 pause_s (
+synch_3 pause_s (
 	osnotify_inmenu, 
 	osnotify_inmenu_s, 
 	clk_sys
 );
 
+wire reset = ~reset_n | region_set;
+
 system system
 (
-	.RESET_N(reset_n),
+	.RESET_N(~reset),
 	.MCLK(clk_sys),
 
 	.LOADING(cart_download),
-	.EXPORT(2'b01),
+	.EXPORT(|region_req),
 	.PAL(0),
 	.SRAM_QUIRK(sram_quirk),
 	.SRAM00_QUIRK(sram00_quirk),
@@ -1000,8 +964,8 @@ system system
 	.HS(hs),
 	.HBL(hblank),
 	.VBL(vblank_sys),
-	.BORDER(cs_video_border_enable),
-	.CRAM_DOTS(cs_video_cram_dots_enable),
+	.BORDER(0),
+	.CRAM_DOTS(0),
 	.CE_PIX(ce_pix),
 	.FIELD(),
 	.INTERLACE(interlaced),
@@ -1033,13 +997,13 @@ system system
 	.SERJOYSTICK_OUT(),
 	.SER_OPT(0),
 
-	.ENABLE_FM(cs_audio_fm_enable),
+	.ENABLE_FM(1),
 	.ENABLE_PSG(1),
-	.EN_HIFI_PCM(cs_audio_hifi_pcm_enable),
+	.EN_HIFI_PCM(1),
 	.LADDER(1),
 	.LPF_MODE(0),
 
-	.OBJ_LIMIT_HIGH(cs_video_high_sprite_limit_enable),
+	.OBJ_LIMIT_HIGH(1),
 
 	.BRAM_A({sd_lba[6:0], sd_buff_addr_out}),
 	.BRAM_DI(sd_buff_dout),

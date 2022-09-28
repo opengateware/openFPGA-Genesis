@@ -1,63 +1,7 @@
 {
     "interact": {
         "magic": "APF_VER_1",
-        "variables": [
-            {
-                "name": "Show Border",
-                "id": 10,
-                "type": "check",
-                "enabled": true,
-                "address": "0x00000000",
-                "persist": true,
-                "writeonly": true,
-                "defaultval": 0,
-                "value": 1
-            },
-            {
-                "name": "Show CRAM Dots",
-                "id": 20,
-                "type": "check",
-                "enabled": true,
-                "address": "0x00000004",
-                "persist": true,
-                "writeonly": true,
-                "defaultval": 0,
-                "value": 1
-            },
-            {
-                "name": "High Sprite Limit",
-                "id": 30,
-                "type": "check",
-                "enabled": true,
-                "address": "0x00000008",
-                "persist": true,
-                "writeonly": true,
-                "defaultval": 1,
-                "value": 1
-            },
-            {
-                "name": "High Fidelity PCM",
-                "id": 40,
-                "type": "check",
-                "enabled": true,
-                "address": "0x00000010",
-                "persist": true,
-                "writeonly": true,
-                "defaultval": 1,
-                "value": 1
-            },
-            {
-                "name": "Enable FM",
-                "id": 50,
-                "type": "check",
-                "enabled": true,
-                "address": "0x00000014",
-                "persist": true,
-                "writeonly": true,
-                "defaultval": 1,
-                "value": 1
-            }
-        ],
+        "variables": [],
         "messages": []
     }
 }
