@@ -426,23 +426,32 @@ core_bridge_cmd icb (
 // Core Settings
 ///////////////////////////////////////////////
 
+// System
+reg cs_cpu_turbo				 = 0;
 reg cs_multitap_enable			 = 0;
 
+// Video 
 reg cs_obj_limit_high_enable  	 = 1;
 reg cs_ar_correction_enable   	 = 0;
 reg cs_composite_enable       	 = 0;
 reg cs_auto_composite_enable  	 = 0;
 
+// Audio
 reg cs_fm_enable 			     = 1;
 reg cs_psg_enable             	 = 1;
 reg cs_hifi_pcm_enable	         = 1;
 reg cs_ladder_enable	 		 = 1;
+reg cs_audio_filter	 		 	 = 0;
+reg cs_fm_chip	 		 		 = 0;
 
 always @(posedge clk_74a) begin
 	if (bridge_rd) begin
 	end
 	if (bridge_wr) begin
       casex (bridge_addr)
+	  	32'h00F00000: cs_audio_filter			<= bridge_wr_data[1:0];
+	  	32'h00A00000: cs_fm_chip				<= bridge_wr_data[0];
+	  	32'h00C00000: cs_cpu_turbo				<= bridge_wr_data[1:0];
         32'h00000000: cs_multitap_enable 	    <= bridge_wr_data[0];
         32'h00000010: cs_ar_correction_enable 	<= bridge_wr_data[0];
         32'h00000020: cs_composite_enable 		<= bridge_wr_data[0];
@@ -628,11 +637,6 @@ wire [7:0] color_lut[16] = '{
 	8'd206, 8'd228, 8'd255, 8'd255
 };
 
-reg         interlaced;
-wire        interlaced_s;
-reg   [1:0] resolution;
-wire  [1:0] resolution_s;
-
 wire [3:0] r, g, b;
 wire vs, hs;
 wire ce_pix;
@@ -678,12 +682,30 @@ assign video_skip = 0;
 reg hs_prev;
 reg vs_prev;
 
+reg         field;
+wire        field_s;
+
+reg         interlaced;
+wire        interlaced_s;
+
+reg   [1:0] resolution;
+wire  [1:0] resolution_s;
+
 synch_3 #(.WIDTH(2)) sv2(resolution, resolution_s, current_pix_clk);
 synch_3 sv3(interlaced, interlaced_s, current_pix_clk);
+synch_3 sv4(field, field_s, current_pix_clk);
 
 always_ff @(posedge current_pix_clk) begin
     video_de_reg <= 0;
-	
+
+	if (vs_c) begin
+		video_rgb_reg[23:3] <= 'd0;
+		video_rgb_reg[3] <= ~field_s;
+		video_rgb_reg[2] <= field_s;
+		video_rgb_reg[1] <= interlaced_s;
+		video_rgb_reg[0] <= 0;
+	end
+
     // Set Video Mode by Index
     case(resolution_s)
         2'b00: begin video_rgb_reg <= 24'h0;                end              							// [0] 256 x 224
@@ -1010,7 +1032,7 @@ system system
 	.DAC_LDATA(AUDIO_L),
 	.DAC_RDATA(AUDIO_R),
 
-	.TURBO(0),
+	.TURBO(cs_cpu_turbo),
 
 	.RED(r),
 	.GREEN(g),
@@ -1022,14 +1044,14 @@ system system
 	.BORDER(0),
 	.CRAM_DOTS(0),
 	.CE_PIX(ce_pix),
-	.FIELD(),
+	.FIELD(field),
 	.INTERLACE(interlaced),
 	.RESOLUTION(resolution),
 	.FAST_FIFO(fifo_quirk),
 	.SVP_QUIRK(svp_quirk),
 	.SCHAN_QUIRK(schan_quirk),
 
-	.J3BUT(0),
+	// .J3BUT(0),
 	.JOY_1(joystick_0),
 	.JOY_2(joystick_1),
 	.JOY_3(joystick_2),
@@ -1037,26 +1059,26 @@ system system
 	.JOY_5(joystick_4),
 	.MULTITAP(cs_multitap_enable),
 
-	.MOUSE(),
-	.MOUSE_OPT(0),
+	// .MOUSE(),
+	// .MOUSE_OPT(0),
 
-	.GUN_OPT(0),
-	.GUN_TYPE(),
-	.GUN_SENSOR(),
-	.GUN_A(),
-	.GUN_B(),
-	.GUN_C(),
-	.GUN_START(),
+	// .GUN_OPT(0),
+	// .GUN_TYPE(),
+	// .GUN_SENSOR(),
+	// .GUN_A(),
+	// .GUN_B(),
+	// .GUN_C(),
+	// .GUN_START(),
 
-	.SERJOYSTICK_IN(),
-	.SERJOYSTICK_OUT(),
-	.SER_OPT(0),
+	// .SERJOYSTICK_IN(),
+	// .SERJOYSTICK_OUT(),
+	// .SER_OPT(0),
 
 	.ENABLE_FM(cs_fm_enable),
 	.ENABLE_PSG(cs_psg_enable),
 	.EN_HIFI_PCM(cs_hifi_pcm_enable),
-	.LADDER(cs_ladder_enable),
-	.LPF_MODE(0),
+	.LADDER(cs_fm_chip),
+	.LPF_MODE(cs_audio_filter),
 
 	.OBJ_LIMIT_HIGH(cs_obj_limit_high_enable),
 

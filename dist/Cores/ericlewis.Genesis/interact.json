@@ -3,13 +3,6 @@
         "magic": "APF_VER_1",
         "variables": [
             {
-                "name": "---- System ----",
-                "id": 1,
-                "type": "action",
-                "enabled": false,
-                "address": "0x90000000"
-            },
-            {
                 "name": "Region",
                 "id": 99,
                 "type": "list",
@@ -34,7 +27,7 @@
                 "name": "CPU Turbo",
                 "id": 399,
                 "type": "list",
-                "enabled": false,
+                "enabled": true,
                 "writeonly": true,
                 "defaultval": "0x00000000",
                 "address": "0x00C00000",
@@ -65,7 +58,7 @@
                 "value": 1
             },
             {
-                "name": "----- Video -----",
+                "name": "VIDEO",
                 "id": 1,
                 "type": "action",
                 "enabled": false,
@@ -116,7 +109,7 @@
                 "value": 1
             },
             {
-                "name": "----- Audio -----",
+                "name": "AUDIO",
                 "id": 1,
                 "type": "action",
                 "enabled": false,
@@ -156,21 +149,11 @@
                 "value": 1
             },
             {
-                "name": "Ladder Effect",
-                "id": 70,
-                "type": "check",
-                "enabled": true,
-                "persist": true,
-                "address": "0x00000070",
-                "writeonly": true,
-                "defaultval": 1,
-                "value": 1
-            },
-            {
                 "name": "Audio Filter",
                 "id": 199,
                 "type": "list",
-                "enabled": false,
+                "enabled": true,
+                "persist": true,
                 "address": "0x00F00000",
                 "writeonly": true,
                 "defaultval": 0,
@@ -188,7 +171,7 @@
                     "name": "Minimal"
                   },
                   {
-                    "value": "0x00000002",
+                    "value": "0x00000003",
                     "name": "None"
                   }
                 ]
@@ -197,7 +180,8 @@
                 "name": "FM Chip",
                 "id": 299,
                 "type": "list",
-                "enabled": false,
+                "enabled": true,
+                "persist": true,
                 "address": "0x00A00000",
                 "writeonly": true,
                 "defaultval": 0,
@@ -215,4 +199,4 @@
         ],
         "messages": []
     }
-}
+  }
