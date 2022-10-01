@@ -304,16 +304,13 @@ always @(*) begin
     default: begin
         bridge_rd_data <= 0;
     end
-	32'h00000000: begin
-        bridge_rd_data <= rom_sz;
+	32'h00E00000: begin
+        bridge_rd_data <= region_req;
     end
     32'hF8xxxxxx: begin
         bridge_rd_data <= cmd_bridge_rd_data;
     end
     endcase
-	if (bridge_addr[31:28] == 4'h6) begin
-      bridge_rd_data <= sd_read_data;
-    end
 end
 
 
@@ -428,6 +425,35 @@ core_bridge_cmd icb (
 ////////////////////////////////////////////////////////////////////////////////////////
 // Core Settings
 ///////////////////////////////////////////////
+
+reg cs_multitap_enable			 = 0;
+
+reg cs_obj_limit_high_enable  	 = 1;
+reg cs_ar_correction_enable   	 = 0;
+reg cs_composite_enable       	 = 0;
+reg cs_auto_composite_enable  	 = 0;
+
+reg cs_fm_enable 			     = 1;
+reg cs_psg_enable             	 = 1;
+reg cs_hifi_pcm_enable	         = 1;
+reg cs_ladder_enable	 		 = 1;
+
+always @(posedge clk_74a) begin
+	if (bridge_rd) begin
+	end
+	if (bridge_wr) begin
+      casex (bridge_addr)
+        32'h00000000: cs_multitap_enable 	    <= bridge_wr_data[0];
+        32'h00000010: cs_ar_correction_enable 	<= bridge_wr_data[0];
+        32'h00000020: cs_composite_enable 		<= bridge_wr_data[0];
+        32'h00000030: cs_obj_limit_high_enable	<= bridge_wr_data[0];
+        32'h00000040: cs_fm_enable 				<= bridge_wr_data[0];
+		32'h00000050: cs_psg_enable 			<= bridge_wr_data[0];
+		32'h00000060: cs_hifi_pcm_enable 		<= bridge_wr_data[0];
+		32'h00000070: cs_ladder_enable 			<= bridge_wr_data[0];
+      endcase
+    end
+end
 
 ///////////////////////////////////////////////
 // Save/Load
@@ -620,14 +646,19 @@ reg [23:0] video_rgb_reg;
 reg current_pix_clk;
 reg current_pix_clk_90;
 
+// TODO: use this
+reg [1:0] res;
+always @(posedge clk_sys) begin
+	reg old_vbl;
+
+	old_vbl <= vblank_sys;
+	if(old_vbl & ~vblank_sys) res <= resolution;
+end
+
 always @(*) begin
     if(resolution == 2'b00) begin
         current_pix_clk <= clk_vid_256;
         current_pix_clk_90 <= clk_vid_256_90deg;
-    end
-    else if(resolution == 2'b01 && interlaced) begin
-        current_pix_clk <= clk_vid_448i;
-        current_pix_clk_90 <= clk_vid_448i_90deg;
     end
     else begin
         current_pix_clk <= clk_vid_320;
@@ -652,31 +683,55 @@ synch_3 sv3(interlaced, interlaced_s, current_pix_clk);
 
 always_ff @(posedge current_pix_clk) begin
     video_de_reg <= 0;
-
+	
     // Set Video Mode by Index
     case(resolution_s)
-        2'b00: begin video_rgb_reg <= 24'h0;                end               // [0] 256 x 224
-        2'b01: begin
-            if(interlaced_s) begin video_rgb_reg <= {11'd4, 10'b0, 3'b0}; end // [4] 320 x 448
-            else             begin video_rgb_reg <= {11'd1, 10'b0, 3'b0}; end // [1] 320 x 224
-        end 
-        2'b10: begin video_rgb_reg <= {11'd2, 10'b0, 3'b0}; end               // [2] 256 x 240
-        2'b11: begin video_rgb_reg <= {11'd3, 10'b0, 3'b0}; end               // [3] 320 x 240
+        2'b00: begin video_rgb_reg <= 24'h0;                end              							// [0] 256 x 224
+        2'b01: begin video_rgb_reg <= {cs_ar_correction_enable ? 11'd4 : 11'd1, 10'b0, 3'b0}; end		// [1] 320 x 224
+        2'b10: begin video_rgb_reg <= {11'd2, 10'b0, 3'b0}; end               							// [2] 256 x 240
+        2'b11: begin video_rgb_reg <= {cs_ar_correction_enable ? 11'd5 : 11'd3, 10'b0, 3'b0}; end     // [3] 320 x 240
     endcase
 
 
-    if (~(vblank_sys || hblank)) begin
+    if (~(vblank_c || hblank_c)) begin
         video_de_reg <= 1;
-        video_rgb_reg[23:16] <= color_lut[r];
-        video_rgb_reg[15:8]  <= color_lut[g];
-        video_rgb_reg[7:0]   <= color_lut[b];
+        video_rgb_reg[23:16] <= red;
+        video_rgb_reg[15:8]  <= green;
+        video_rgb_reg[7:0]   <= blue;
     end
 
-    video_hs_reg <= ~hs_prev && hs;
-    video_vs_reg <= ~vs_prev && vs;
-    hs_prev <= hs;
-    vs_prev <= vs;
+    video_hs_reg <= ~hs_prev && hs_c;
+    video_vs_reg <= ~vs_prev && vs_c;
+    hs_prev <= hs_c;
+    vs_prev <= vs_c;
 end
+
+wire TRANSP_DETECT;
+wire cofi_enable = cs_composite_enable || (cs_auto_composite_enable && TRANSP_DETECT);
+wire hs_c, vs_c, hblank_c, vblank_c;
+wire [7:0] red, green, blue;
+
+cofi coffee (
+	.clk(clk_sys),
+	.pix_ce(ce_pix),
+	.enable(cofi_enable),
+
+	.hblank(hblank),
+	.vblank(vblank_sys),
+	.hs(hs),
+	.vs(vs),
+	.red(color_lut[r]),
+	.green(color_lut[g]),
+	.blue(color_lut[b]),
+
+	.hblank_out(hblank_c),
+	.vblank_out(vblank_c),
+	.hs_out(hs_c),
+	.vs_out(vs_c),
+	.red_out(red),
+	.green_out(green),
+	.blue_out(blue)
+);
 
 ///////////////////////////////////////////////
 // RAM
@@ -980,7 +1035,7 @@ system system
 	.JOY_3(joystick_2),
 	.JOY_4(joystick_3),
 	.JOY_5(joystick_4),
-	.MULTITAP(0),
+	.MULTITAP(cs_multitap_enable),
 
 	.MOUSE(),
 	.MOUSE_OPT(0),
@@ -997,13 +1052,13 @@ system system
 	.SERJOYSTICK_OUT(),
 	.SER_OPT(0),
 
-	.ENABLE_FM(1),
-	.ENABLE_PSG(1),
-	.EN_HIFI_PCM(1),
-	.LADDER(1),
+	.ENABLE_FM(cs_fm_enable),
+	.ENABLE_PSG(cs_psg_enable),
+	.EN_HIFI_PCM(cs_hifi_pcm_enable),
+	.LADDER(cs_ladder_enable),
 	.LPF_MODE(0),
 
-	.OBJ_LIMIT_HIGH(1),
+	.OBJ_LIMIT_HIGH(cs_obj_limit_high_enable),
 
 	.BRAM_A({sd_lba[6:0], sd_buff_addr_out}),
 	.BRAM_DI(sd_buff_dout),
@@ -1025,7 +1080,7 @@ system system
 	.ROM_REQ2(rom_rd2),
 	.ROM_ACK2(rom_rdack2),
 
-	.TRANSP_DETECT(),
+	.TRANSP_DETECT(TRANSP_DETECT),
 
 	.PAUSE_EN(osnotify_inmenu_s),
 	.BGA_EN(1),
@@ -1057,8 +1112,6 @@ system system
             .outclk_3 ( clk_vid_320_90deg  ),
             .outclk_4 ( clk_vid_256        ),
             .outclk_5 ( clk_vid_256_90deg  ),
-            .outclk_6 ( clk_vid_448i       ),
-            .outclk_7 ( clk_vid_448i_90deg ),
 
             .locked   ( pll_core_locked    )
         );

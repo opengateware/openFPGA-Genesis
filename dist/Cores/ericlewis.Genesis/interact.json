@@ -1,7 +1,218 @@
 {
     "interact": {
         "magic": "APF_VER_1",
-        "variables": [],
+        "variables": [
+            {
+                "name": "---- System ----",
+                "id": 1,
+                "type": "action",
+                "enabled": false,
+                "address": "0x90000000"
+            },
+            {
+                "name": "Region",
+                "id": 99,
+                "type": "list",
+                "enabled": true,
+                "address": "0x00E00000",
+                "options": [
+                  {
+                    "value": "0x00000000",
+                    "name": "Japan"
+                  },
+                  {
+                    "value": "0x00000001",
+                    "name": "United States"
+                  },
+                  {
+                    "value": "0x00000002",
+                    "name": "Europe"
+                  }
+                ]
+            },
+            {
+                "name": "CPU Turbo",
+                "id": 399,
+                "type": "list",
+                "enabled": false,
+                "writeonly": true,
+                "defaultval": "0x00000000",
+                "address": "0x00C00000",
+                "options": [
+                  {
+                    "value": "0x00000000",
+                    "name": "None"
+                  },
+                  {
+                    "value": "0x00000001",
+                    "name": "Medium"
+                  },
+                  {
+                    "value": "0x00000002",
+                    "name": "High"
+                  }
+                ]
+            },
+            {
+                "name": "Multitap",
+                "id": 9,
+                "type": "check",
+                "enabled": true,
+                "persist": true,
+                "address": "0x00000000",
+                "writeonly": true,
+                "defaultval": 0,
+                "value": 1
+            },
+            {
+                "name": "----- Video -----",
+                "id": 1,
+                "type": "action",
+                "enabled": false,
+                "address": "0x90000000"
+            },
+            {
+                "name": "PAL",
+                "id": 8,
+                "type": "check",
+                "enabled": false,
+                "persist": true,
+                "address": "0x00000080",
+                "writeonly": true,
+                "defaultval": 0,
+                "value": 1
+            },
+            {
+                "name": "Corrected AR",
+                "id": 10,
+                "type": "check",
+                "enabled": true,
+                "persist": true,
+                "address": "0x00000010",
+                "writeonly": true,
+                "defaultval": 0,
+                "value": 1
+            },
+            {
+                "name": "Composite Blend",
+                "id": 20,
+                "type": "check",
+                "enabled": true,
+                "persist": true,
+                "address": "0x00000020",
+                "writeonly": true,
+                "defaultval": 0,
+                "value": 1
+            },
+            {
+                "name": "High Sprite Limit",
+                "id": 30,
+                "type": "check",
+                "enabled": true,
+                "persist": true,
+                "address": "0x00000030",
+                "writeonly": true,
+                "defaultval": 1,
+                "value": 1
+            },
+            {
+                "name": "----- Audio -----",
+                "id": 1,
+                "type": "action",
+                "enabled": false,
+                "address": "0x90000000"
+            },
+            {
+                "name": "Freq. Modulation",
+                "id": 40,
+                "type": "check",
+                "enabled": true,
+                "persist": true,
+                "address": "0x00000040",
+                "writeonly": true,
+                "defaultval": 1,
+                "value": 1
+            },
+            {
+                "name": "PSG",
+                "id": 50,
+                "type": "check",
+                "enabled": true,
+                "persist": true,
+                "address": "0x00000050",
+                "writeonly": true,
+                "defaultval": 1,
+                "value": 1
+            },
+            {
+                "name": "HiFi PCM",
+                "id": 60,
+                "type": "check",
+                "enabled": true,
+                "persist": true,
+                "address": "0x00000060",
+                "writeonly": true,
+                "defaultval": 1,
+                "value": 1
+            },
+            {
+                "name": "Ladder Effect",
+                "id": 70,
+                "type": "check",
+                "enabled": true,
+                "persist": true,
+                "address": "0x00000070",
+                "writeonly": true,
+                "defaultval": 1,
+                "value": 1
+            },
+            {
+                "name": "Audio Filter",
+                "id": 199,
+                "type": "list",
+                "enabled": false,
+                "address": "0x00F00000",
+                "writeonly": true,
+                "defaultval": 0,
+                "options": [
+                  {
+                    "value": "0x00000000",
+                    "name": "Model 1"
+                  },
+                  {
+                    "value": "0x00000001",
+                    "name": "Model 2"
+                  },
+                  {
+                    "value": "0x00000002",
+                    "name": "Minimal"
+                  },
+                  {
+                    "value": "0x00000002",
+                    "name": "None"
+                  }
+                ]
+            },
+            {
+                "name": "FM Chip",
+                "id": 299,
+                "type": "list",
+                "enabled": false,
+                "address": "0x00A00000",
+                "writeonly": true,
+                "defaultval": 0,
+                "options": [
+                  {
+                    "value": "0x00000000",
+                    "name": "YM2612"
+                  },
+                  {
+                    "value": "0x00000001",
+                    "name": "YM3438"
+                  }
+                ]
+            }
+        ],
         "messages": []
     }
 }

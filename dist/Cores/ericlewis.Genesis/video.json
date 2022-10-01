@@ -36,9 +36,17 @@
             },
             {
                 "width": 320,
-                "height": 448,
-                "aspect_w": 64,
-                "aspect_h": 49,
+                "height": 224,
+                "aspect_w": 10,
+                "aspect_h": 7,
+                "rotation": 0,
+                "mirror": 0
+            },
+            {
+                "width": 320,
+                "height": 240,
+                "aspect_w": 4,
+                "aspect_h": 3,
                 "rotation": 0,
                 "mirror": 0
             }
