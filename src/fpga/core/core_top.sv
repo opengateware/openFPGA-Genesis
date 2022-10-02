@@ -532,7 +532,8 @@ always_ff @(posedge clk_sys) begin
 	reg old_download;
 	old_download <= cart_download;
 
-	if (old_download & ~cart_download) rom_sz <= (ioctl_addr[24:0]);
+    // ROM size is the last written word's address, plus one more word
+	if (old_download & ~cart_download) rom_sz <= (ioctl_addr[24:0]+2);
 end
 
 reg  [1:0] region_req;
