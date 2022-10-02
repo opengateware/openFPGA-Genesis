@@ -697,6 +697,7 @@ synch_3 sv3(interlaced, interlaced_s, current_pix_clk);
 synch_3 sv4(field, field_s, current_pix_clk);
 
 always_ff @(posedge current_pix_clk) begin
+    reg vblank_line = 0;
     video_de_reg <= 0;
 
 	if (vs_c) begin
@@ -716,7 +717,7 @@ always_ff @(posedge current_pix_clk) begin
     endcase
 
 
-    if (~(vblank_c || hblank_c)) begin
+    if (~(vblank_line || hblank_c)) begin
         video_de_reg <= 1;
         video_rgb_reg[23:16] <= red;
         video_rgb_reg[15:8]  <= green;
@@ -727,6 +728,16 @@ always_ff @(posedge current_pix_clk) begin
     video_vs_reg <= ~vs_prev && vs_c;
     hs_prev <= hs_c;
     vs_prev <= vs_c;
+
+    // the vblank signal starts and stops a bit before the end of the visible
+    // portion of the line. if used to gate pixel output, this means the last
+    // visible line gets truncated and the last blank line is partially shown,
+    // producing garbage on the screen. capture and use vblank's value at hsync
+    // to avoid this; hsync starts a line so that's when we care whether or not
+    // the line is visible.
+    if (~hs_prev && hs_c) begin
+        vblank_line <= vblank_c;
+    end
 end
 
 wire TRANSP_DETECT;
