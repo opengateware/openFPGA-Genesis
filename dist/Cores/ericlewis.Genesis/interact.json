@@ -29,19 +29,19 @@
                 "type": "list",
                 "enabled": true,
                 "writeonly": true,
-                "defaultval": "0x00000000",
+                "defaultval": 0,
                 "address": "0x00C00000",
                 "options": [
                   {
-                    "value": "0x00000000",
+                    "value": 0,
                     "name": "None"
                   },
                   {
-                    "value": "0x00000001",
+                    "value": 1,
                     "name": "Medium"
                   },
                   {
-                    "value": "0x00000002",
+                    "value": 2,
                     "name": "High"
                   }
                 ]
@@ -159,19 +159,19 @@
                 "defaultval": 0,
                 "options": [
                   {
-                    "value": "0x00000000",
+                    "value": 0,
                     "name": "Model 1"
                   },
                   {
-                    "value": "0x00000001",
+                    "value": 1,
                     "name": "Model 2"
                   },
                   {
-                    "value": "0x00000002",
+                    "value": 2,
                     "name": "Minimal"
                   },
                   {
-                    "value": "0x00000003",
+                    "value": 3,
                     "name": "None"
                   }
                 ]
@@ -187,11 +187,11 @@
                 "defaultval": 0,
                 "options": [
                   {
-                    "value": "0x00000000",
+                    "value": 0,
                     "name": "YM2612"
                   },
                   {
-                    "value": "0x00000001",
+                    "value": 1,
                     "name": "YM3438"
                   }
                 ]

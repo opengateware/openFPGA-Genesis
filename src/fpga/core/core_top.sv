@@ -440,7 +440,6 @@ reg cs_auto_composite_enable  	 = 0;
 reg cs_fm_enable 			     = 1;
 reg cs_psg_enable             	 = 1;
 reg cs_hifi_pcm_enable	         = 1;
-reg cs_ladder_enable	 		 = 1;
 reg cs_audio_filter	 		 	 = 0;
 reg cs_fm_chip	 		 		 = 0;
 
@@ -459,7 +458,6 @@ always @(posedge clk_74a) begin
         32'h00000040: cs_fm_enable 				<= bridge_wr_data[0];
 		32'h00000050: cs_psg_enable 			<= bridge_wr_data[0];
 		32'h00000060: cs_hifi_pcm_enable 		<= bridge_wr_data[0];
-		32'h00000070: cs_ladder_enable 			<= bridge_wr_data[0];
       endcase
     end
 end
@@ -914,7 +912,7 @@ end
 // Controls
 ///////////////////////////////////////////////
 
-wire [15:0] joystick_0, joystick_1, joystick_2, joystick_3, joystick_4;
+wire [15:0] joystick_0, joystick_1, joystick_2, joystick_3;
 
 wire [15:0] cont1_key_s;
 wire [15:0] cont2_key_s;
@@ -1068,7 +1066,7 @@ system system
 	.JOY_2(joystick_1),
 	.JOY_3(joystick_2),
 	.JOY_4(joystick_3),
-	.JOY_5(joystick_4),
+	// .JOY_5(joystick_4),
 	.MULTITAP(cs_multitap_enable),
 
 	// .MOUSE(),
@@ -1089,7 +1087,7 @@ system system
 	.ENABLE_FM(cs_fm_enable),
 	.ENABLE_PSG(cs_psg_enable),
 	.EN_HIFI_PCM(cs_hifi_pcm_enable),
-	.LADDER(cs_fm_chip),
+	.LADDER(~cs_fm_chip),
 	.LPF_MODE(cs_audio_filter),
 
 	.OBJ_LIMIT_HIGH(cs_obj_limit_high_enable),
