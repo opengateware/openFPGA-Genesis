@@ -18,9 +18,4 @@ All rights reserved
 - This core is far from complete and I am aware of most issues.
 - You *can* report issues, but I probably won't look at them.
 - No PAL.
-- No proper region detection (or switching).
-- Due to above, US only currently.
-- Plenty of games do not work correctly.
 - No save states work.
-- Probably other broken things... I have noticed bin ROMs tend to work okay.
-- Many missing core settings.
