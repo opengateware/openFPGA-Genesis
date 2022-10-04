@@ -473,7 +473,6 @@ end
 // Save/Load
 ///////////////////////////////////////////////
 
-reg  [31:0] sd_lba;
 wire sd_rd;
 wire sd_wr;
 wire [7:0]  sd_buff_addr;
@@ -516,9 +515,9 @@ end
 
 data_unloader #(
 	.ADDRESS_MASK_UPPER_4(4'h6),
-	.ADDRESS_SIZE(17),
-	.READ_MEM_CLOCK_DELAY(24),
-	.INPUT_WORD_SIZE(2)
+	.ADDRESS_SIZE(8),
+	.READ_MEM_CLOCK_DELAY(12),
+	.INPUT_WORD_SIZE(1)
 ) save_data_unloader (
 	.clk_74a(clk_74a),
 	.clk_memory(clk_sys),
@@ -1123,7 +1122,7 @@ system system
 
 	.OBJ_LIMIT_HIGH(cs_obj_limit_high_enable),
 
-	.BRAM_A({sd_lba[6:0],sd_buff_addr}),
+	.BRAM_A(sd_buff_addr),
 	.BRAM_DI(sd_buff_dout),
 	.BRAM_DO(sd_buff_din),
 	.BRAM_WE(sd_wr),
