@@ -473,18 +473,22 @@ end
 // Save/Load
 ///////////////////////////////////////////////
 
+wire [31:0] sd_read_data;
+
 wire sd_rd;
 wire sd_wr;
-wire [7:0]  sd_buff_addr;
-wire [15:0] sd_buff_dout;
+
+wire [16:0] sd_buff_addr_in;
+wire [16:0] sd_buff_addr_out;
+
+// Lowest bit is for byte addressing
+wire [15:0] sd_buff_addr = sd_wr ? sd_buff_addr_in[16:1] : sd_buff_addr_out[16:1];
+
 wire [15:0] sd_buff_din;
-wire [31:0] sd_read_data;
+wire [15:0] sd_buff_dout;
 
 reg [ 2:0] datatable_div = 0;
 reg [31:0] rom_file_size = 0;
-
-wire bk_change;
-wire bk_loading;
 
 always @(posedge clk_74a or negedge pll_core_locked) begin
 	if (~pll_core_locked) begin
@@ -515,9 +519,9 @@ end
 
 data_unloader #(
 	.ADDRESS_MASK_UPPER_4(4'h6),
-	.ADDRESS_SIZE(8),
-	.READ_MEM_CLOCK_DELAY(12),
-	.INPUT_WORD_SIZE(1)
+	.ADDRESS_SIZE(17),
+	.READ_MEM_CLOCK_DELAY(7),
+	.INPUT_WORD_SIZE(2)
 ) save_data_unloader (
 	.clk_74a(clk_74a),
 	.clk_memory(clk_sys),
@@ -528,8 +532,27 @@ data_unloader #(
 	.bridge_rd_data(sd_read_data),
 
 	.read_en  (sd_rd),
-	.read_addr(sd_buff_addr),
+	.read_addr(sd_buff_addr_out),
 	.read_data(sd_buff_din)
+);
+
+data_loader #(
+      .ADDRESS_MASK_UPPER_4(4'h6),
+      .ADDRESS_SIZE(17),
+      .WRITE_MEM_CLOCK_DELAY(7),
+      .OUTPUT_WORD_SIZE(2)
+) save_data_loader (
+      .clk_74a(clk_74a),
+      .clk_memory(clk_sys),
+
+      .bridge_wr(bridge_wr),
+      .bridge_endian_little(bridge_endian_little),
+      .bridge_addr(bridge_addr),
+      .bridge_wr_data(bridge_wr_data),
+
+      .write_en  (sd_wr),
+      .write_addr(sd_buff_addr_in),
+      .write_data(sd_buff_dout)
 );
 
 ///////////////////////////////////////////////
@@ -545,29 +568,20 @@ reg         ioctl_wait;
 wire 		cart_download;
 
 synch_2 cart_download_s (
-	ioctl_download,
+	ioctl_download & bridge_addr[31:28] == 4'h1,
 	cart_download,
 	clk_sys
 );
 
-always_ff @(posedge clk_74a) begin
+always @(posedge clk_74a) begin
     if (dataslot_requestwrite) ioctl_download <= 1;
     else if (dataslot_allcomplete) ioctl_download <= 0;
 end
 
 wire sdrom_wrack;
-reg [24:0] rom_sz;
-always_ff @(posedge clk_sys) begin
-	reg old_download;
-	old_download <= cart_download;
-
-    // ROM size is the last written word's address, plus one more word
-	if (old_download & ~cart_download) rom_sz <= (ioctl_addr[24:0]+2);
-end
-
 reg  [1:0] region_req;
 reg        region_set = 0;
-always_ff @(posedge clk_sys) begin
+always @(posedge clk_sys) begin
 	reg old_ready = 0;
 
 	old_ready <= cart_hdr_ready;
@@ -586,7 +600,7 @@ wire [3:0] hrgn = ioctl_data[3:0] - 4'd7;
 
 reg cart_hdr_ready = 0;
 reg hdr_j=0,hdr_u=0,hdr_e=0;
-always_ff @(posedge clk_sys) begin
+always @(posedge clk_sys) begin
 	reg old_download;
 	old_download <= cart_download;
 
@@ -725,7 +739,7 @@ synch_3 #(.WIDTH(2)) sv2(resolution, resolution_s, current_pix_clk);
 synch_3 sv3(interlaced, interlaced_s, current_pix_clk);
 synch_3 sv4(field, field_s, current_pix_clk);
 
-always_ff @(posedge current_pix_clk) begin
+always @(posedge current_pix_clk) begin
     reg vblank_line = 0;
     video_de_reg <= 0;
 
@@ -805,7 +819,7 @@ sdram sdram
 	.init(~pll_core_locked),
 	.clk(clk_ram),
 
-	.addr0(cart_download ? ioctl_addr[24:1] : rom_sz),
+	.addr0(ioctl_addr[24:1]),
 	.din0({ioctl_data[7:0], ioctl_data[15:8]}),
 	.dout0(),
 	.wrl0(1),
@@ -821,13 +835,13 @@ sdram sdram
 	.req1(rom_req),
 	.ack1(sdrom_rdack),
 
-	.addr2(rom_addr2),
-	.din2(),
-	.dout2(rom_data2),
-	.wrl2(0),
-	.wrh2(0),
-	.req2(rom_rd2),
-	.ack2(rom_rdack2),
+	// .addr2(rom_addr2),
+	// .din2(rom_wdata),
+	// .dout2(rom_data2),
+	// .wrl2(0),
+	// .wrh2(0),
+	// .req2(rom_rd2),
+	// .ack2(rom_rdack2),
 
 	.SDRAM_DQ(dram_dq),      // 16 bit bidirectional data bus
 	.SDRAM_A(dram_a),        // 13 bit multiplexed address bus
@@ -859,7 +873,7 @@ reg schan_quirk = 0;
 reg gun_type = 0;
 reg [7:0] gun_sensor_delay = 8'd44;
 
-always_ff @(posedge clk_sys) begin
+always @(posedge clk_sys) begin
 	reg [63:0] cart_id;
 	
 	if(cart_download) begin
@@ -1052,7 +1066,7 @@ synch_3 pause_s (
 	clk_sys
 );
 
-wire reset = ~reset_n | region_set | bk_loading;
+wire reset = ~reset_n | region_set;
 
 system system
 (
@@ -1126,9 +1140,9 @@ system system
 	.BRAM_DI(sd_buff_dout),
 	.BRAM_DO(sd_buff_din),
 	.BRAM_WE(sd_wr),
-	.BRAM_CHANGE(bk_change),
+	.BRAM_CHANGE(),
 
-	.ROMSZ(rom_sz[24:1]),
+	.ROMSZ(rom_file_size[24:1]),
 	.ROM_ADDR(rom_addr),
 	.ROM_DATA(sdrom_data),
 	.ROM_WDATA(rom_wdata),
