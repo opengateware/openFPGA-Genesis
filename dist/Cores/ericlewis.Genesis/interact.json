@@ -3,6 +3,14 @@
         "magic": "APF_VER_1",
         "variables": [
             {
+                "name": "Reset Core",
+                "id": 2,
+                "type": "action",
+                "enabled": true,
+                "address": "0x00000070",
+                "value": 1
+            },
+            {
                 "name": "Region",
                 "id": 99,
                 "type": "list",
