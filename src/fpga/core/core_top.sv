@@ -694,7 +694,6 @@ reg [23:0] video_rgb_reg;
 reg current_pix_clk;
 reg current_pix_clk_90;
 
-// TODO: use this
 reg [1:0] res;
 always @(posedge clk_sys) begin
 	reg old_vbl;
@@ -704,11 +703,10 @@ always @(posedge clk_sys) begin
 end
 
 always @(*) begin
-    if(resolution == 2'b00) begin
+    if(res == 2'b00) begin
         current_pix_clk <= clk_vid_256;
         current_pix_clk_90 <= clk_vid_256_90deg;
-    end
-    else begin
+    end else begin
         current_pix_clk <= clk_vid_320;
         current_pix_clk_90 <= clk_vid_320_90deg;
     end
@@ -735,7 +733,7 @@ wire        interlaced_s;
 reg   [1:0] resolution;
 wire  [1:0] resolution_s;
 
-synch_3 #(.WIDTH(2)) sv2(resolution, resolution_s, current_pix_clk);
+synch_3 #(.WIDTH(2)) sv2(res, resolution_s, current_pix_clk);
 synch_3 sv3(interlaced, interlaced_s, current_pix_clk);
 synch_3 sv4(field, field_s, current_pix_clk);
 
