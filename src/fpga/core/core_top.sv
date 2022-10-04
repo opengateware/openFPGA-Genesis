@@ -994,21 +994,21 @@ synch_3 #(
 );
 
 
-wire cont_1_type = cont1_key_s[31:29];
+wire cont_1_type = |cont1_key_s[31:29];
 
 assign joystick_0 = {
     cont_1_type ? cont1_key_s[10] : cont1_key_s[9],  // Z
     cont_1_type ? cont1_key_s[7] : cont1_key_s[6],  // Y
     cont_1_type ? cont1_key_s[6] : cont1_key_s[8],  // X
-    cont_1_type ? cont1_key_s[14] : cont1_key_s[14], // mode
-    cont_1_type ? cont1_key_s[15] : cont1_key_s[15], // start
+    cont1_key_s[14], // mode
+    cont1_key_s[15], // start
     cont_1_type ? cont1_key_s[11] : cont1_key_s[4],  // B
     cont_1_type ? cont1_key_s[5] : cont1_key_s[5],  // C
     cont_1_type ? cont1_key_s[4] : cont1_key_s[7],  // A
-    cont_1_type ? cont1_key_s[0] : cont1_key_s[0],  // up
-    cont_1_type ? cont1_key_s[1] : cont1_key_s[1],  // down
-    cont_1_type ? cont1_key_s[2] : cont1_key_s[2],     // left
-    cont_1_type ? cont1_key_s[3] : cont1_key_s[3],     // right
+    cont1_key_s[0],  // up
+    cont1_key_s[1],  // down
+    cont1_key_s[2],     // left
+    cont1_key_s[3],     // right
 };
 
 assign joystick_1 = {
