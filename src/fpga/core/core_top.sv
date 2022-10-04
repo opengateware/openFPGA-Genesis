@@ -944,13 +944,13 @@ end
 
 wire [15:0] joystick_0, joystick_1, joystick_2, joystick_3;
 
-wire [15:0] cont1_key_s;
-wire [15:0] cont2_key_s;
-wire [15:0] cont3_key_s;
-wire [15:0] cont4_key_s;
+wire [31:0] cont1_key_s;
+wire [31:0] cont2_key_s;
+wire [31:0] cont3_key_s;
+wire [31:0] cont4_key_s;
 
 synch_3 #(
-    .WIDTH(16)
+    .WIDTH(32)
 ) cont1_s (
     cont1_key,
     cont1_key_s,
@@ -958,7 +958,7 @@ synch_3 #(
 );
 
 synch_3 #(
-    .WIDTH(16)
+    .WIDTH(32)
 ) cont2_s (
     cont2_key,
     cont2_key_s,
@@ -966,7 +966,7 @@ synch_3 #(
 );
 
 synch_3 #(
-    .WIDTH(16)
+    .WIDTH(32)
 ) cont3_s (
     cont3_key,
     cont3_key_s,
@@ -974,26 +974,29 @@ synch_3 #(
 );
 
 synch_3 #(
-    .WIDTH(16)
+    .WIDTH(32)
 ) cont4_s (
     cont4_key,
     cont4_key_s,
     clk_sys
 );
 
+
+wire cont_1_type = cont1_key_s[31:29];
+
 assign joystick_0 = {
-	cont1_key_s[9],  // Z
-	cont1_key_s[6],  // Y
-	cont1_key_s[8],  // X
-	cont1_key_s[14], // mode
-	cont1_key_s[15], // start
-	cont1_key_s[4],  // B
-	cont1_key_s[5],  // C
-	cont1_key_s[7],  // A
-	cont1_key_s[0],  // up
-	cont1_key_s[1],  // down
-	cont1_key_s[2],	 // left
-	cont1_key_s[3],	 // right
+    cont_1_type ? cont1_key_s[10] : cont1_key_s[9],  // Z
+    cont_1_type ? cont1_key_s[7] : cont1_key_s[6],  // Y
+    cont_1_type ? cont1_key_s[6] : cont1_key_s[8],  // X
+    cont_1_type ? cont1_key_s[14] : cont1_key_s[14], // mode
+    cont_1_type ? cont1_key_s[15] : cont1_key_s[15], // start
+    cont_1_type ? cont1_key_s[11] : cont1_key_s[4],  // B
+    cont_1_type ? cont1_key_s[5] : cont1_key_s[5],  // C
+    cont_1_type ? cont1_key_s[4] : cont1_key_s[7],  // A
+    cont_1_type ? cont1_key_s[0] : cont1_key_s[0],  // up
+    cont_1_type ? cont1_key_s[1] : cont1_key_s[1],  // down
+    cont_1_type ? cont1_key_s[2] : cont1_key_s[2],     // left
+    cont_1_type ? cont1_key_s[3] : cont1_key_s[3],     // right
 };
 
 assign joystick_1 = {
