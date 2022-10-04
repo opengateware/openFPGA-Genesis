@@ -115,7 +115,7 @@
               "defaultval": 1,
               "value": 1
           },
-		  {
+          {
               "name": "M30 Controller 1",
               "id": 499,
               "type": "check",
@@ -126,7 +126,7 @@
               "defaultval": 0,
               "value": 1
           },
-		  {
+          {
               "name": "M30 Controller 2",
               "id": 500,
               "type": "check",
@@ -137,7 +137,7 @@
               "defaultval": 0,
               "value": 1
           },
-		  {
+	  {
               "name": "M30 Controller 3",
               "id": 501,
               "type": "check",
@@ -148,7 +148,7 @@
               "defaultval": 0,
               "value": 1
           },
-		  {
+	  {
               "name": "M30 Controller 4",
               "id": 502,
               "type": "check",
