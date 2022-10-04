@@ -427,6 +427,8 @@ core_bridge_cmd icb (
 ///////////////////////////////////////////////
 
 // System
+reg [11:0] reset_counter = 0;
+reg [15:0] reset_delay = 0;
 reg cs_cpu_turbo				 = 0;
 reg cs_multitap_enable			 = 0;
 
@@ -444,20 +446,28 @@ reg cs_audio_filter	 		 	 = 0;
 reg cs_fm_chip	 		 		 = 0;
 
 always @(posedge clk_74a) begin
+    reset_counter = reset_counter + 1;
+    if (~osnotify_inmenu_s && reset_delay > 0) begin
+      reset_delay <= reset_delay - 1;
+    end
+
 	if (bridge_rd) begin
 	end
 	if (bridge_wr) begin
       casex (bridge_addr)
-	  	32'h00F00000: cs_audio_filter			<= bridge_wr_data[1:0];
-	  	32'h00A00000: cs_fm_chip				<= bridge_wr_data[0];
-	  	32'h00C00000: cs_cpu_turbo				<= bridge_wr_data[1:0];
+        32'h00F00000: cs_audio_filter			<= bridge_wr_data[1:0];
+        2'h00A00000: cs_fm_chip				<= bridge_wr_data[0];
+        32'h00C00000: cs_cpu_turbo				<= bridge_wr_data[1:0];
         32'h00000000: cs_multitap_enable 	    <= bridge_wr_data[0];
         32'h00000010: cs_ar_correction_enable 	<= bridge_wr_data[0];
         32'h00000020: cs_composite_enable 		<= bridge_wr_data[0];
         32'h00000030: cs_obj_limit_high_enable	<= bridge_wr_data[0];
         32'h00000040: cs_fm_enable 				<= bridge_wr_data[0];
-		32'h00000050: cs_psg_enable 			<= bridge_wr_data[0];
-		32'h00000060: cs_hifi_pcm_enable 		<= bridge_wr_data[0];
+        32'h00000050: cs_psg_enable 			<= bridge_wr_data[0];
+        32'h00000060: cs_hifi_pcm_enable 		<= bridge_wr_data[0];
+        32'h00000070: begin
+            if (bridge_wr_data[31:0] > 0) reset_delay <= {reset_counter, 4'b1111};
+          end
       endcase
     end
 end
@@ -1026,7 +1036,7 @@ wire reset = ~reset_n | region_set;
 
 system system
 (
-	.RESET_N(~reset),
+	.RESET_N(~reset && !reset_delay),
 	.MCLK(clk_sys),
 
 	.LOADING(cart_download),
