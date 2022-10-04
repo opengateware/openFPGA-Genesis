@@ -7,7 +7,7 @@
             "description": "Sega Genesis, known as the Mega Drive outside North America, is a 16-bit fourth-generation home video game console developed and sold by Sega.",
             "author": "ericlewis",
             "url": "https://github.com/ericlewis/openfpga-genesis",
-            "version": "0.2.2",
+            "version": "0.3.0",
             "date_release": "2022-10-04"
         },
         "framework": {
