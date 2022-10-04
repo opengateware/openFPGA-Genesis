@@ -450,10 +450,15 @@ reg cs_audio_filter	 		 	 = 0;
 reg cs_fm_chip	 		 		 = 0;
 
 always @(posedge clk_74a) begin
+	reset_counter = reset_counter + 1;
+    if (~osnotify_inmenu && reset_delay > 0) begin
+      reset_delay <= reset_delay - 1;
+    end
+
 	if (bridge_wr) begin
       casex (bridge_addr)
         32'h00F00000: cs_audio_filter			<= bridge_wr_data[1:0];
-        2'h00A00000: cs_fm_chip				<= bridge_wr_data[0];
+        32'h00A00000: cs_fm_chip                <= bridge_wr_data[0];
         32'h00C00000: cs_cpu_turbo				<= bridge_wr_data[1:0];
         32'h00000000: cs_multitap_enable 	    <= bridge_wr_data[0];
         32'h00000010: cs_ar_correction_enable 	<= bridge_wr_data[0];
@@ -694,16 +699,8 @@ reg [23:0] video_rgb_reg;
 reg current_pix_clk;
 reg current_pix_clk_90;
 
-reg [1:0] res;
-always @(posedge clk_sys) begin
-	reg old_vbl;
-
-	old_vbl <= vblank_sys;
-	if(old_vbl & ~vblank_sys) res <= resolution;
-end
-
 always @(*) begin
-    if(res == 2'b00) begin
+    if(resolution == 2'b00) begin
         current_pix_clk <= clk_vid_256;
         current_pix_clk_90 <= clk_vid_256_90deg;
     end else begin
@@ -733,7 +730,7 @@ wire        interlaced_s;
 reg   [1:0] resolution;
 wire  [1:0] resolution_s;
 
-synch_3 #(.WIDTH(2)) sv2(res, resolution_s, current_pix_clk);
+synch_3 #(.WIDTH(2)) sv2(resolution, resolution_s, current_pix_clk);
 synch_3 sv3(interlaced, interlaced_s, current_pix_clk);
 synch_3 sv4(field, field_s, current_pix_clk);
 
@@ -833,13 +830,13 @@ sdram sdram
 	.req1(rom_req),
 	.ack1(sdrom_rdack),
 
-	// .addr2(rom_addr2),
-	// .din2(rom_wdata),
-	// .dout2(rom_data2),
-	// .wrl2(0),
-	// .wrh2(0),
-	// .req2(rom_rd2),
-	// .ack2(rom_rdack2),
+	.addr2(rom_addr2),
+	.din2(rom_wdata),
+	.dout2(rom_data2),
+	.wrl2(0),
+	.wrh2(0),
+	.req2(rom_rd2),
+	.ack2(rom_rdack2),
 
 	.SDRAM_DQ(dram_dq),      // 16 bit bidirectional data bus
 	.SDRAM_A(dram_a),        // 13 bit multiplexed address bus
