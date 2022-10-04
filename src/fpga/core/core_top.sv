@@ -431,9 +431,9 @@ core_bridge_cmd icb (
 ///////////////////////////////////////////////
 
 // System
-reg [11:0] reset_counter = 0;
-reg [15:0] reset_delay = 0;
-reg cs_cpu_turbo				 = 0;
+reg [11:0] reset_counter 		 = 0;
+reg [15:0] reset_delay			 = 0;
+reg [1:0] cs_cpu_turbo			 = 0;
 reg cs_multitap_enable			 = 0;
 
 // Video 
@@ -446,7 +446,7 @@ reg cs_auto_composite_enable  	 = 0;
 reg cs_fm_enable 			     = 1;
 reg cs_psg_enable             	 = 1;
 reg cs_hifi_pcm_enable	         = 1;
-reg cs_audio_filter	 		 	 = 0;
+reg [1:0] cs_audio_filter	 	 = 0;
 reg cs_fm_chip	 		 		 = 0;
 
 always @(posedge clk_74a) begin
