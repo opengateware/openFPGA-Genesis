@@ -139,28 +139,6 @@
         "value": 1
       },
       {
-        "name": "M30 Controller 3",
-        "id": 501,
-        "type": "check",
-        "enabled": true,
-        "persist": true,
-        "address": "0x00000100",
-        "writeonly": true,
-        "defaultval": 0,
-        "value": 1
-      },
-      {
-        "name": "M30 Controller 4",
-        "id": 502,
-        "type": "check",
-        "enabled": true,
-        "persist": true,
-        "address": "0x00000110",
-        "writeonly": true,
-        "defaultval": 0,
-        "value": 1
-      },
-      {
         "name": "AUDIO",
         "id": 1,
         "type": "action",
