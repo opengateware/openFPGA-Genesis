@@ -449,6 +449,12 @@ reg cs_hifi_pcm_enable	         = 1;
 reg cs_audio_filter	 		 	 = 0;
 reg cs_fm_chip	 		 		 = 0;
 
+//M30 Controller
+reg cs_m30C1_map_enable            = 0;
+reg cs_m30C2_map_enable            = 0;
+reg cs_m30C3_map_enable            = 0;
+reg cs_m30C4_map_enable            = 0;
+
 always @(posedge clk_74a) begin
 	if (bridge_wr) begin
       casex (bridge_addr)
@@ -465,6 +471,10 @@ always @(posedge clk_74a) begin
         32'h00000070: begin
             if (bridge_wr_data[31:0] > 0) reset_delay <= {reset_counter, 4'b1111};
           end
+	32'h00000080: cs_m30C1_map_enable         <= bridge_wr_data[0];
+        32'h00000090: cs_m30C2_map_enable         <= bridge_wr_data[0];
+	32'h00000100: cs_m30C3_map_enable         <= bridge_wr_data[0];
+	32'h00000110: cs_m30c4_map_enable         <= bridge_wr_data[0];  
       endcase
     end
 end
@@ -994,66 +1004,65 @@ synch_3 #(
 );
 
 
-wire cont_1_type = |cont1_key_s[31:29];
 
 assign joystick_0 = {
-    cont_1_type ? cont1_key_s[10] : cont1_key_s[9],  // Z
-    cont_1_type ? cont1_key_s[7] : cont1_key_s[6],  // Y
-    cont_1_type ? cont1_key_s[6] : cont1_key_s[8],  // X
+    cs_m30C1_map_enable ? cont1_key_s[10] : cont1_key_s[9],  // Z
+    cs_m30C1_map_enable ? cont1_key_s[7] : cont1_key_s[6],  // Y
+    cs_m30C1_map_enable ? cont1_key_s[6] : cont1_key_s[8],  // X
     cont1_key_s[14], // mode
     cont1_key_s[15], // start
-    cont_1_type ? cont1_key_s[11] : cont1_key_s[4],  // B
-    cont_1_type ? cont1_key_s[5] : cont1_key_s[5],  // C
-    cont_1_type ? cont1_key_s[4] : cont1_key_s[7],  // A
+    cs_m30C1_map_enable ? cont1_key_s[11] : cont1_key_s[4],  // B
+    cs_m30C1_map_enable ? cont1_key_s[5] : cont1_key_s[5],  // C
+    cs_m30C1_map_enable ? cont1_key_s[4] : cont1_key_s[7],  // A
     cont1_key_s[0],  // up
     cont1_key_s[1],  // down
-    cont1_key_s[2],     // left
-    cont1_key_s[3],     // right
+    cont1_key_s[2],  // left
+    cont1_key_s[3],  // right
 };
 
 assign joystick_1 = {
-	cont2_key_s[9],  // Z
-	cont2_key_s[6],  // Y
-	cont2_key_s[8],  // X
-	cont2_key_s[14], // mode
-	cont2_key_s[15], // start
-	cont2_key_s[4],  // B
-	cont2_key_s[5],  // C
-	cont2_key_s[7],  // A
-	cont2_key_s[0],  // up
-	cont2_key_s[1],  // down
-	cont2_key_s[2],	 // left
-	cont2_key_s[3],	 // right
+    cs_m30C2_map_enable ? cont2_key_s[10] : cont2_key_s[9],  // Z
+    cs_m30C2_map_enable ? cont2_key_s[7] : cont2_key_s[6],  // Y
+    cs_m30C2_map_enable ? cont2_key_s[6] : cont2_key_s[8],  // X
+    cont2_key_s[14], // mode
+    cont2_key_s[15], // start
+    cs_m30C2_map_enable ? cont2_key_s[11] : cont2_key_s[4],  // B
+    cs_m30C2_map_enable ? cont2_key_s[5] : cont2_key_s[5],  // C
+    cs_m30C2_map_enable ? cont2_key_s[4] : cont2_key_s[7],  // A
+    cont2_key_s[0],  // up
+    cont2_key_s[1],  // down
+    cont2_key_s[2],  // left
+    cont2_key_s[3],  // right
 };
 
 assign joystick_2 = {
-	cont3_key_s[9],  // Z
-	cont3_key_s[6],  // Y
-	cont3_key_s[8],  // X
-	cont3_key_s[14], // mode
-	cont3_key_s[15], // start
-	cont3_key_s[4],  // B
-	cont3_key_s[5],  // C
-	cont3_key_s[7],  // A
-	cont3_key_s[0],  // up
-	cont3_key_s[1],  // down
-	cont3_key_s[2],	 // left
-	cont3_key_s[3],	 // right
+    cs_m30C3_map_enable ? cont3_key_s[10] : cont3_key_s[9],  // Z
+    cs_m30C3_map_enable ? cont3_key_s[7] : cont3_key_s[6],  // Y
+    cs_m30C3_map_enable ? cont3_key_s[6] : cont3_key_s[8],  // X
+    cont3_key_s[14], // mode
+    cont3_key_s[15], // start
+    cs_m30C3_map_enable ? cont3_key_s[11] : cont3_key_s[4],  // B
+    cs_m30C3_map_enable ? cont3_key_s[5] : cont3_key_s[5],  // C
+    cs_m30C3_map_enable ? cont3_key_s[4] : cont3_key_s[7],  // A
+    cont3_key_s[0],  // up
+    cont3_key_s[1],  // down
+    cont3_key_s[2],  // left
+    cont3_key_s[3],  // right
 };
 
 assign joystick_3 = {
-	cont4_key_s[9],  // Z
-	cont4_key_s[6],  // Y
-	cont4_key_s[8],  // X
-	cont4_key_s[14], // mode
-	cont4_key_s[15], // start
-	cont4_key_s[4],  // B
-	cont4_key_s[5],  // C
-	cont4_key_s[7],  // A
-	cont4_key_s[0],  // up
-	cont4_key_s[1],  // down
-	cont4_key_s[2],	 // left
-	cont4_key_s[3],	 // right
+    cs_m30C4_map_enable ? cont4_key_s[10] : cont4_key_s[9],  // Z
+    cs_m30C4_map_enable ? cont4_key_s[7] : cont4_key_s[6],  // Y
+    cs_m30C4_map_enable ? cont4_key_s[6] : cont4_key_s[8],  // X
+    cont4_key_s[14], // mode
+    cont4_key_s[15], // start
+    cs_m30C4_map_enable ? cont4_key_s[11] : cont4_key_s[4],  // B
+    cs_m30C4_map_enable ? cont4_key_s[5] : cont4_key_s[5],  // C
+    cs_m30C4_map_enable ? cont4_key_s[4] : cont4_key_s[7],  // A
+    cont4_key_s[0],  // up
+    cont4_key_s[1],  // down
+    cont4_key_s[2],  // left
+    cont4_key_s[3],  // right
 };
 
 ///////////////////////////////////////////////
