@@ -311,6 +311,10 @@ always @(*) begin
         bridge_rd_data <= cmd_bridge_rd_data;
     end
     endcase
+
+	if (bridge_addr[31:28] == 4'h6) begin
+      bridge_rd_data <= sd_read_data;
+    end
 end
 
 
@@ -446,13 +450,6 @@ reg cs_audio_filter	 		 	 = 0;
 reg cs_fm_chip	 		 		 = 0;
 
 always @(posedge clk_74a) begin
-    reset_counter = reset_counter + 1;
-    if (~osnotify_inmenu_s && reset_delay > 0) begin
-      reset_delay <= reset_delay - 1;
-    end
-
-	if (bridge_rd) begin
-	end
 	if (bridge_wr) begin
       casex (bridge_addr)
         32'h00F00000: cs_audio_filter			<= bridge_wr_data[1:0];
@@ -477,22 +474,50 @@ end
 ///////////////////////////////////////////////
 
 reg  [31:0] sd_lba;
-reg         sd_rd = 0;
-reg         sd_wr = 0;
-wire        sd_ack;
-wire  [7:0] sd_buff_addr_out;
+wire sd_rd;
+wire sd_wr;
+wire [7:0]  sd_buff_addr;
 wire [15:0] sd_buff_dout;
 wire [15:0] sd_buff_din;
-wire        sd_buff_wr;
 wire [31:0] sd_read_data;
 
-reg bk_ena = 0;
-reg bk_change = 0;
+reg [ 2:0] datatable_div = 0;
+reg [31:0] rom_file_size = 0;
+
+wire bk_change;
+wire bk_loading;
+
+always @(posedge clk_74a or negedge pll_core_locked) begin
+	if (~pll_core_locked) begin
+		datatable_addr <= 0;
+		datatable_data <= 0;
+		datatable_wren <= 0;
+	end else begin
+		if (datatable_div > 4) begin
+			// Write sram size half of the time
+			datatable_wren <= 1;
+			// sram_size is the size of the config value in the ROM. Convert to actual size
+			datatable_data <= 32'd65536;
+			// Data slot index 1, not id 1
+			datatable_addr <= 1 * 2 + 1;
+		end else begin
+			datatable_wren <= 0;
+			// Read ROM size rest of the time
+			datatable_addr <= 1;
+
+			if (datatable_div == 4) begin
+				rom_file_size <= datatable_q;
+			end
+		end
+
+		datatable_div <= datatable_div + 1;
+	end
+end
 
 data_unloader #(
 	.ADDRESS_MASK_UPPER_4(4'h6),
-	.ADDRESS_SIZE(8),
-	.READ_MEM_CLOCK_DELAY(7),
+	.ADDRESS_SIZE(17),
+	.READ_MEM_CLOCK_DELAY(24),
 	.INPUT_WORD_SIZE(2)
 ) save_data_unloader (
 	.clk_74a(clk_74a),
@@ -504,12 +529,9 @@ data_unloader #(
 	.bridge_rd_data(sd_read_data),
 
 	.read_en  (sd_rd),
-	.read_addr(sd_buff_addr_out),
+	.read_addr(sd_buff_addr),
 	.read_data(sd_buff_din)
 );
-
-reg  bk_loading = 0;
-reg  bk_state   = 0;
 
 ///////////////////////////////////////////////
 // ROM
@@ -808,7 +830,6 @@ sdram sdram
 	.req2(rom_rd2),
 	.ack2(rom_rdack2),
 
-	// SDRAM <-> APF
 	.SDRAM_DQ(dram_dq),      // 16 bit bidirectional data bus
 	.SDRAM_A(dram_a),        // 13 bit multiplexed address bus
 	.SDRAM_DQML(dram_dqm[0]),   // byte mask
@@ -1032,7 +1053,7 @@ synch_3 pause_s (
 	clk_sys
 );
 
-wire reset = ~reset_n | region_set;
+wire reset = ~reset_n | region_set | bk_loading;
 
 system system
 (
@@ -1102,10 +1123,10 @@ system system
 
 	.OBJ_LIMIT_HIGH(cs_obj_limit_high_enable),
 
-	.BRAM_A({sd_lba[6:0], sd_buff_addr_out}),
+	.BRAM_A({sd_lba[6:0],sd_buff_addr}),
 	.BRAM_DI(sd_buff_dout),
 	.BRAM_DO(sd_buff_din),
-	.BRAM_WE(sd_buff_wr & sd_ack),
+	.BRAM_WE(sd_wr),
 	.BRAM_CHANGE(bk_change),
 
 	.ROMSZ(rom_sz[24:1]),

@@ -3,6 +3,7 @@
         "magic": "APF_VER_1",
         "data_slots": [
             {
+                "id": 0,
                 "name": "Cartridge",
                 "required": true,
                 "parameters": "0x109",
@@ -13,8 +14,9 @@
                 "id": 10,
                 "name": "Save",
                 "required": false,
+                "nonvolatile": true,
                 "parameters": "0x84",
-                "extensions": ["save"],
+                "extensions": ["sav"],
                 "address": "0x60000000"
             }
         ]
