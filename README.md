@@ -16,6 +16,4 @@ All rights reserved
 
 ## Important to read this first!
 - This core is far from complete and I am aware of most issues.
-- You *can* report issues, but I probably won't look at them.
 - No PAL.
-- No save states work.
