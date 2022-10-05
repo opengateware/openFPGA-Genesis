@@ -77,17 +77,6 @@
         "value": 1
       },
       {
-        "name": "PAL",
-        "id": 8,
-        "type": "check",
-        "enabled": false,
-        "persist": true,
-        "address": "0x00000080",
-        "writeonly": true,
-        "defaultval": 0,
-        "value": 1
-      },
-      {
         "name": "Corrected AR",
         "id": 10,
         "type": "check",

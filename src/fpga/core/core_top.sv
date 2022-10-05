@@ -435,6 +435,7 @@ reg [11:0] reset_counter 		 = 0;
 reg [15:0] reset_delay			 = 0;
 reg [1:0] cs_cpu_turbo			 = 0;
 reg cs_multitap_enable			 = 0;
+reg cs_menu_pause_enable		 = 0;
 
 // Video 
 reg cs_obj_limit_high_enable  	 = 1;
@@ -474,6 +475,7 @@ always @(posedge clk_74a) begin
             if (bridge_wr_data[31:0] > 0) reset_delay <= {reset_counter, 4'b1111};
           end
 		32'h00000080: cs_m30_map_enable         <= bridge_wr_data[0];
+		32'h00000090: cs_menu_pause_enable      <= bridge_wr_data[0];
       endcase
     end
 end
@@ -641,7 +643,7 @@ end
 data_loader #(
 	.ADDRESS_MASK_UPPER_4(4'h1),
     .ADDRESS_SIZE(25),
-	.WRITE_MEM_CLOCK_DELAY(24),
+	.WRITE_MEM_CLOCK_DELAY(12),
 	.WRITE_MEM_EN_CYCLE_LENGTH(4),
 	.OUTPUT_WORD_SIZE(2)
 ) rom_loader (
@@ -1156,7 +1158,7 @@ system system
 
 	.TRANSP_DETECT(TRANSP_DETECT),
 
-	.PAUSE_EN(osnotify_inmenu_s),
+	.PAUSE_EN(cs_menu_pause_enable ? osnotify_inmenu_s : 0),
 	.BGA_EN(1),
 	.BGB_EN(1),
 	.SPR_EN(1)
