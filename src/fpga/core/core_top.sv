@@ -450,10 +450,7 @@ reg [1:0] cs_audio_filter	 	 = 0;
 reg cs_fm_chip	 		 		 = 0;
 
 //M30 Controller
-reg cs_m30C1_map_enable            = 0;
-reg cs_m30C2_map_enable            = 0;
-reg cs_m30C3_map_enable            = 0;
-reg cs_m30C4_map_enable            = 0;
+reg cs_m30_map_enable            = 0;
 
 always @(posedge clk_74a) begin
 	reset_counter = reset_counter + 1;
@@ -476,10 +473,7 @@ always @(posedge clk_74a) begin
         32'h00000070: begin
             if (bridge_wr_data[31:0] > 0) reset_delay <= {reset_counter, 4'b1111};
           end
-		32'h00000080: cs_m30C1_map_enable         <= bridge_wr_data[0];
-		32'h00000090: cs_m30C2_map_enable         <= bridge_wr_data[0];
-		32'h00000100: cs_m30C3_map_enable         <= bridge_wr_data[0];
-		32'h00000110: cs_m30c4_map_enable         <= bridge_wr_data[0];
+		32'h00000080: cs_m30_map_enable         <= bridge_wr_data[0];
       endcase
     end
 end
@@ -848,15 +842,15 @@ sdram sdram
 	.req2(rom_rd2),
 	.ack2(rom_rdack2),
 
-	.SDRAM_DQ(dram_dq),      // 16 bit bidirectional data bus
-	.SDRAM_A(dram_a),        // 13 bit multiplexed address bus
+	.SDRAM_DQ(dram_dq),         // 16 bit bidirectional data bus
+	.SDRAM_A(dram_a),           // 13 bit multiplexed address bus
 	.SDRAM_DQML(dram_dqm[0]),   // byte mask
 	.SDRAM_DQMH(dram_dqm[1]),   // byte mask
-    .SDRAM_BA(dram_ba),      // two banks
-	.SDRAM_nCS(1'b0),        // a single chip select
-	.SDRAM_nWE(dram_we_n),   // write enable
-	.SDRAM_nRAS(dram_ras_n), // row address select
-	.SDRAM_nCAS(dram_cas_n), // columns address select
+    .SDRAM_BA(dram_ba),         // two banks
+	.SDRAM_nCS(1'b0),           // a single chip select
+	.SDRAM_nWE(dram_we_n),      // write enable
+	.SDRAM_nRAS(dram_ras_n),    // row address select
+	.SDRAM_nCAS(dram_cas_n),    // columns address select
 	.SDRAM_CLK(dram_clk),
 	.SDRAM_CKE(dram_cke)
 );
@@ -963,37 +957,37 @@ end
 
 wire [15:0] joystick_0, joystick_1, joystick_2, joystick_3;
 
-wire [15:0] cont1_key_s;
-wire [15:0] cont2_key_s;
-wire [15:0] cont3_key_s;
-wire [15:0] cont4_key_s;
+wire [31:0] cont1_key_s;
+wire [31:0] cont2_key_s;
+wire [31:0] cont3_key_s;
+wire [31:0] cont4_key_s;
 
-synch_3 #(
-    .WIDTH(16)
+synch_2 #(
+    .WIDTH(32)
 ) cont1_s (
     cont1_key,
     cont1_key_s,
     clk_sys
 );
 
-synch_3 #(
-    .WIDTH(16)
+synch_2 #(
+    .WIDTH(32)
 ) cont2_s (
     cont2_key,
     cont2_key_s,
     clk_sys
 );
 
-synch_3 #(
-    .WIDTH(16)
+synch_2 #(
+    .WIDTH(32)
 ) cont3_s (
     cont3_key,
     cont3_key_s,
     clk_sys
 );
 
-synch_3 #(
-    .WIDTH(16)
+synch_2 #(
+    .WIDTH(32)
 ) cont4_s (
     cont4_key,
     cont4_key_s,
@@ -1001,14 +995,14 @@ synch_3 #(
 );
 
 assign joystick_0 = {
-    cs_m30C1_map_enable ? cont1_key_s[10] : cont1_key_s[9],  // Z
-    cs_m30C1_map_enable ? cont1_key_s[7] : cont1_key_s[6],  // Y
-    cs_m30C1_map_enable ? cont1_key_s[6] : cont1_key_s[8],  // X
+    cs_m30_map_enable ? cont1_key_s[10] : cont1_key_s[9],  // Z
+    cs_m30_map_enable ? cont1_key_s[7] : cont1_key_s[6],  // Y
+    cs_m30_map_enable ? cont1_key_s[6] : cont1_key_s[8],  // X
     cont1_key_s[14], // mode
     cont1_key_s[15], // start
-    cs_m30C1_map_enable ? cont1_key_s[11] : cont1_key_s[4],  // B
-    cs_m30C1_map_enable ? cont1_key_s[5] : cont1_key_s[5],  // C
-    cs_m30C1_map_enable ? cont1_key_s[4] : cont1_key_s[7],  // A
+    cs_m30_map_enable ? cont1_key_s[11] : cont1_key_s[4],  // B
+    cs_m30_map_enable ? cont1_key_s[5] : cont1_key_s[5],  // C
+    cs_m30_map_enable ? cont1_key_s[4] : cont1_key_s[7],  // A
     cont1_key_s[0],  // up
     cont1_key_s[1],  // down
     cont1_key_s[2],  // left
@@ -1016,14 +1010,14 @@ assign joystick_0 = {
 };
 
 assign joystick_1 = {
-    cs_m30C2_map_enable ? cont2_key_s[10] : cont2_key_s[9],  // Z
-    cs_m30C2_map_enable ? cont2_key_s[7] : cont2_key_s[6],  // Y
-    cs_m30C2_map_enable ? cont2_key_s[6] : cont2_key_s[8],  // X
+    cs_m30_map_enable ? cont2_key_s[10] : cont2_key_s[9],  // Z
+    cs_m30_map_enable ? cont2_key_s[7] : cont2_key_s[6],  // Y
+    cs_m30_map_enable ? cont2_key_s[6] : cont2_key_s[8],  // X
     cont2_key_s[14], // mode
     cont2_key_s[15], // start
-    cs_m30C2_map_enable ? cont2_key_s[11] : cont2_key_s[4],  // B
-    cs_m30C2_map_enable ? cont2_key_s[5] : cont2_key_s[5],  // C
-    cs_m30C2_map_enable ? cont2_key_s[4] : cont2_key_s[7],  // A
+    cs_m30_map_enable ? cont2_key_s[11] : cont2_key_s[4],  // B
+    cs_m30_map_enable ? cont2_key_s[5] : cont2_key_s[5],  // C
+    cs_m30_map_enable ? cont2_key_s[4] : cont2_key_s[7],  // A
     cont2_key_s[0],  // up
     cont2_key_s[1],  // down
     cont2_key_s[2],  // left
@@ -1031,14 +1025,14 @@ assign joystick_1 = {
 };
 
 assign joystick_2 = {
-    cs_m30C3_map_enable ? cont3_key_s[10] : cont3_key_s[9],  // Z
-    cs_m30C3_map_enable ? cont3_key_s[7] : cont3_key_s[6],  // Y
-    cs_m30C3_map_enable ? cont3_key_s[6] : cont3_key_s[8],  // X
+    cs_m30_map_enable ? cont3_key_s[10] : cont3_key_s[9],  // Z
+    cs_m30_map_enable ? cont3_key_s[7] : cont3_key_s[6],  // Y
+    cs_m30_map_enable ? cont3_key_s[6] : cont3_key_s[8],  // X
     cont3_key_s[14], // mode
     cont3_key_s[15], // start
-    cs_m30C3_map_enable ? cont3_key_s[11] : cont3_key_s[4],  // B
-    cs_m30C3_map_enable ? cont3_key_s[5] : cont3_key_s[5],  // C
-    cs_m30C3_map_enable ? cont3_key_s[4] : cont3_key_s[7],  // A
+    cs_m30_map_enable ? cont3_key_s[11] : cont3_key_s[4],  // B
+    cs_m30_map_enable ? cont3_key_s[5] : cont3_key_s[5],  // C
+    cs_m30_map_enable ? cont3_key_s[4] : cont3_key_s[7],  // A
     cont3_key_s[0],  // up
     cont3_key_s[1],  // down
     cont3_key_s[2],  // left
@@ -1046,14 +1040,14 @@ assign joystick_2 = {
 };
 
 assign joystick_3 = {
-    cs_m30C4_map_enable ? cont4_key_s[10] : cont4_key_s[9],  // Z
-    cs_m30C4_map_enable ? cont4_key_s[7] : cont4_key_s[6],  // Y
-    cs_m30C4_map_enable ? cont4_key_s[6] : cont4_key_s[8],  // X
+    cs_m30_map_enable ? cont4_key_s[10] : cont4_key_s[9],  // Z
+    cs_m30_map_enable ? cont4_key_s[7] : cont4_key_s[6],  // Y
+    cs_m30_map_enable ? cont4_key_s[6] : cont4_key_s[8],  // X
     cont4_key_s[14], // mode
     cont4_key_s[15], // start
-    cs_m30C4_map_enable ? cont4_key_s[11] : cont4_key_s[4],  // B
-    cs_m30C4_map_enable ? cont4_key_s[5] : cont4_key_s[5],  // C
-    cs_m30C4_map_enable ? cont4_key_s[4] : cont4_key_s[7],  // A
+    cs_m30_map_enable ? cont4_key_s[11] : cont4_key_s[4],  // B
+    cs_m30_map_enable ? cont4_key_s[5] : cont4_key_s[5],  // C
+    cs_m30_map_enable ? cont4_key_s[4] : cont4_key_s[7],  // A
     cont4_key_s[0],  // up
     cont4_key_s[1],  // down
     cont4_key_s[2],  // left

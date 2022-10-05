@@ -19,8 +19,8 @@ set_clock_groups -asynchronous \
 
 derive_clock_uncertainty
 
-set_multicycle_path -from {ic|sdram|*} -to {ic|system|*} -setup 2
-set_multicycle_path -from {ic|sdram|*} -to {ic|system|*} -hold 1
+set_multicycle_path -from {ic|sdram|dout*} -to {ic|system|data*} -setup 2
+set_multicycle_path -from {ic|sdram|dout*} -to {ic|system|data*} -hold 1
 
 set_multicycle_path -from {ic|system|data*} -to [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[0].*|divclk}] -start -setup 2
 set_multicycle_path -from {ic|system|data*} -to [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[0].*|divclk}] -start -hold 1

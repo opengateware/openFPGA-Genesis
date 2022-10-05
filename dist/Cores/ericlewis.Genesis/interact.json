@@ -66,11 +66,15 @@
         "value": 1
       },
       {
-        "name": "VIDEO",
-        "id": 1,
-        "type": "action",
-        "enabled": false,
-        "address": "0x90000000"
+        "name": "M30 Controllers",
+        "id": 499,
+        "type": "check",
+        "enabled": true,
+        "persist": true,
+        "address": "0x00000080",
+        "writeonly": true,
+        "defaultval": 0,
+        "value": 1
       },
       {
         "name": "PAL",
@@ -115,35 +119,6 @@
         "writeonly": true,
         "defaultval": 1,
         "value": 1
-      },
-      {
-        "name": "M30 Controller 1",
-        "id": 499,
-        "type": "check",
-        "enabled": true,
-        "persist": true,
-        "address": "0x00000080",
-        "writeonly": true,
-        "defaultval": 0,
-        "value": 1
-      },
-      {
-        "name": "M30 Controller 2",
-        "id": 500,
-        "type": "check",
-        "enabled": true,
-        "persist": true,
-        "address": "0x00000090",
-        "writeonly": true,
-        "defaultval": 0,
-        "value": 1
-      },
-      {
-        "name": "AUDIO",
-        "id": 1,
-        "type": "action",
-        "enabled": false,
-        "address": "0x90000000"
       },
       {
         "name": "Freq. Modulation",
