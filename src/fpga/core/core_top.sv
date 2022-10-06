@@ -450,11 +450,14 @@ reg cs_hifi_pcm_enable	         = 1;
 reg [1:0] cs_audio_filter	 	 = 0;
 reg cs_fm_chip	 		 		 = 0;
 
-//M30 Controller
+// Input
 reg cs_m30_map_enable            = 0;
+reg lightgun_enabled             = 0;
+reg show_crosshair               = 1;
+reg [7:0] dpad_aim_speed         = 4;
 
 always @(posedge clk_74a) begin
-	reset_counter = reset_counter + 1;
+    reset_counter = reset_counter + 1;
     if (~osnotify_inmenu && reset_delay > 0) begin
       reset_delay <= reset_delay - 1;
     end
@@ -479,6 +482,9 @@ always @(posedge clk_74a) begin
           end
 		32'h00000080: cs_m30_map_enable         <= bridge_wr_data[0];
 		32'h00000090: cs_menu_pause_enable      <= bridge_wr_data[0];
+        32'h00000100: lightgun_enabled <= bridge_wr_data[0];
+        32'h00000104: show_crosshair <= bridge_wr_data[0];
+        32'h00000108: dpad_aim_speed <= bridge_wr_data[7:0];
       endcase
     end
 end
@@ -766,9 +772,9 @@ always @(posedge current_pix_clk) begin
 
     if (~(vblank_line || hblank_c)) begin
         video_de_reg <= 1;
-        video_rgb_reg[23:16] <= red;
-        video_rgb_reg[15:8]  <= green;
-        video_rgb_reg[7:0]   <= blue;
+        video_rgb_reg[23:16] <= (lg_target && lightgun_enabled && show_crosshair) ? {8{lg_target[0]}} : red;
+        video_rgb_reg[15:8]  <= (lg_target && lightgun_enabled && show_crosshair) ? {8{lg_target[1]}} : green;
+        video_rgb_reg[7:0]   <= (lg_target && lightgun_enabled && show_crosshair) ? {8{lg_target[2]}} : blue;
     end
 
     video_hs_reg <= ~hs_prev && hs_c;
@@ -874,8 +880,8 @@ reg pier_quirk = 0;
 reg svp_quirk = 0;
 reg fmbusy_quirk = 0;
 reg schan_quirk = 0;
-reg gun_type = 0;
-reg [7:0] gun_sensor_delay = 8'd44;
+reg lightgun_type = 0;
+reg [7:0] lightgun_sensor_delay = 8'd44;
 
 always @(posedge clk_sys) begin
 	reg [63:0] cart_id;
@@ -929,28 +935,28 @@ always @(posedge clk_sys) begin
 
 			// Lightgun device and timing offsets
 			if(cart_id == "MK-1533 ") begin						  // Body Count
-				gun_type  <= 0;
-				gun_sensor_delay <= 8'd100;
+				lightgun_type  <= 0;
+				lightgun_sensor_delay <= 8'd100;
 			end
 			else if(cart_id == "T-95096-") begin				  // Lethal Enforcers
-				gun_type  <= 1;
-				gun_sensor_delay <= 8'd52;
+				lightgun_type  <= 1;
+				lightgun_sensor_delay <= 8'd52;
 			end
 			else if(cart_id == "T-95136-") begin				  // Lethal Enforcers II
-				gun_type  <= 1;
-				gun_sensor_delay <= 8'd30;
+				lightgun_type  <= 1;
+				lightgun_sensor_delay <= 8'd30;
 			end
 			else if(cart_id == "MK-1658 ") begin				  // Menacer 6-in-1
-				gun_type  <= 0;
-				gun_sensor_delay <= 8'd120;
+				lightgun_type  <= 0;
+				lightgun_sensor_delay <= 8'd120;
 			end
 			else if(cart_id == "T-081156") begin				  // T2: The Arcade Game
-				gun_type  <= 0;
-				gun_sensor_delay <= 8'd126;
+				lightgun_type  <= 0;
+				lightgun_sensor_delay <= 8'd126;
 			end
 			else begin
-				gun_type  <= 0;
-				gun_sensor_delay <= 8'd44;
+				lightgun_type  <= 0;
+				lightgun_sensor_delay <= 8'd44;
 			end
 		end
 	end
@@ -966,6 +972,7 @@ wire [31:0] cont1_key_s;
 wire [31:0] cont2_key_s;
 wire [31:0] cont3_key_s;
 wire [31:0] cont4_key_s;
+wire [31:0] cont1_joy_s;
 
 synch_2 #(
     .WIDTH(32)
@@ -999,12 +1006,20 @@ synch_2 #(
     clk_sys
 );
 
+synch_3 #(
+    .WIDTH(32)
+) joy1_s (
+    cont1_joy,
+    cont1_joy_s,
+    clk_sys
+);
+
 assign joystick_0 = {
     cs_m30_map_enable ? cont1_key_s[10] : cont1_key_s[9],  // Z
     cs_m30_map_enable ? cont1_key_s[7] : cont1_key_s[6],  // Y
     cs_m30_map_enable ? cont1_key_s[6] : cont1_key_s[8],  // X
     cont1_key_s[14], // mode
-    cont1_key_s[15], // start
+    lightgun_enabled ? 0 : cont1_key_s[15], // start
     cs_m30_map_enable ? cont1_key_s[11] : cont1_key_s[4],  // B
     cs_m30_map_enable ? cont1_key_s[5] : cont1_key_s[5],  // C
     cs_m30_map_enable ? cont1_key_s[4] : cont1_key_s[7],  // A
@@ -1058,6 +1073,54 @@ assign joystick_3 = {
     cont4_key_s[2],  // left
     cont4_key_s[3],  // right
 };
+
+///////////////////////////////////////////////
+// Lightguns
+///////////////////////////////////////////////
+wire [2:0] lg_target;
+wire       lg_sensor;
+wire       lg_a;
+wire       lg_b;
+wire       lg_c;
+wire       lg_start;
+
+lightgun lightgun
+(
+    .CLK(clk_sys),
+    .RESET(reset),
+
+    // .MOUSE(ps2_mouse),
+    // .MOUSE_XY(&gun_mode),
+
+    .JOY_X(cont1_joy_s[7:0]),
+    .JOY_Y(cont1_joy_s[15:8]),
+    .JOY(cont1_key),
+
+    .UP(cont1_key[0]),
+    .DOWN(cont1_key[1]),
+    .LEFT(cont1_key[2]),
+    .RIGHT(cont1_key[3]),
+    .DPAD_AIM_SPEED(dpad_aim_speed),
+
+    .RELOAD(lightgun_type),
+
+    .HDE(~hblank_c),
+    .VDE(~vblank_c),
+    .CE_PIX(ce_pix),
+    .H40(resolution[0]),
+
+    .BTN_MODE(0),
+    // .SIZE(0),
+    .SENSOR_DELAY(lightgun_sensor_delay),
+
+    .TARGET(lg_target),
+    .SENSOR(lg_sensor),
+    .BTN_A(lg_a),
+    .BTN_B(lg_b),
+    .BTN_C(lg_c),
+    .BTN_START(lg_start)
+);
+
 ///////////////////////////////////////////////
 // Instance
 ///////////////////////////////////////////////
@@ -1119,13 +1182,13 @@ system system
 	// .MOUSE(),
 	// .MOUSE_OPT(0),
 
-	// .GUN_OPT(0),
-	// .GUN_TYPE(),
-	// .GUN_SENSOR(),
-	// .GUN_A(),
-	// .GUN_B(),
-	// .GUN_C(),
-	// .GUN_START(),
+    .GUN_OPT(lightgun_enabled),
+    .GUN_TYPE(lightgun_type),
+    .GUN_SENSOR(lg_sensor),
+    .GUN_A(lg_a),
+    .GUN_B(lg_b),
+    .GUN_C(lg_c),
+    .GUN_START(lg_start),
 
 	// .SERJOYSTICK_IN(),
 	// .SERJOYSTICK_OUT(),
