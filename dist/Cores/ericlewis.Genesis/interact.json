@@ -118,7 +118,7 @@
         "persist": true,
         "address": "0x00000030",
         "writeonly": true,
-        "defaultval": 1,
+        "defaultval": 0,
         "value": 1
       },
       {
@@ -151,7 +151,7 @@
         "persist": true,
         "address": "0x00000060",
         "writeonly": true,
-        "defaultval": 1,
+        "defaultval": 0,
         "value": 1
       },
       {
