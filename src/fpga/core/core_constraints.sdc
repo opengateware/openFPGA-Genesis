@@ -27,3 +27,9 @@ set_multicycle_path -from {ic|system|data*} -to [get_clocks {ic|mp1|mf_pllbase_i
 
 set_multicycle_path -from [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[0].*|divclk}] -to {ic|system|data*} -setup 2
 set_multicycle_path -from [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[0].*|divclk}] -to {ic|system|data*} -hold 1
+
+set_multicycle_path -from {ic|system|data*} -to [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[1].*|divclk}] -start -setup 2
+set_multicycle_path -from {ic|system|data*} -to [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[1].*|divclk}] -start -hold 1
+
+set_multicycle_path -from [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[1].*|divclk}] -to {ic|system|data*} -setup 2
+set_multicycle_path -from [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[1].*|divclk}] -to {ic|system|data*} -hold 1
