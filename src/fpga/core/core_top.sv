@@ -1019,7 +1019,7 @@ assign joystick_0 = {
     cs_m30_map_enable ? cont1_key_s[7]  : cont1_key_s[6],  // Y
     cs_m30_map_enable ? cont1_key_s[6]  : cont1_key_s[8],  // X
     cont1_key_s[14],                                       // mode
-    lightgun_enabled  ? cont1_key_s[16] : cont1_key_s[15], // start
+    lightgun_enabled  ? 1'b0            : cont1_key_s[15], // start
     cs_m30_map_enable ? cont1_key_s[11] : cont1_key_s[4],  // B
     cs_m30_map_enable ? cont1_key_s[5]  : cont1_key_s[5],  // C
     cs_m30_map_enable ? cont1_key_s[4]  : cont1_key_s[7],  // A
