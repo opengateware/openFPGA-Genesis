@@ -66,6 +66,45 @@
         "value": 1
       },
       {
+        "name": "Lightgun",
+        "id": 70,
+        "type": "check",
+        "enabled": true,
+        "persist": true,
+        "address": "0x00000100",
+        "writeonly": true,
+        "defaultval": 0,
+        "value": 1
+      },
+      {
+        "name": "Show Crosshair",
+        "id": 71,
+        "type": "check",
+        "enabled": true,
+        "persist": true,
+        "address": "0x00000104",
+        "writeonly": true,
+        "defaultval": 1,
+        "value": 1
+      },
+      {
+        "name": "D-Pad Aim Speed",
+        "id": 72,
+        "type": "slider_u32",
+        "enabled": true,
+        "address": "0x00000108",
+        "persist": true,
+        "writeonly": true,
+        "defaultval": 3,
+        "graphical": {
+          "signed": false,
+          "min": 1,
+          "max": 10,
+          "adjust_small": 1,
+          "adjust_large": 4
+        }
+      },
+      {
         "name": "M30 Controllers",
         "id": 499,
         "type": "check",
