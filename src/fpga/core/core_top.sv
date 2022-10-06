@@ -1016,17 +1016,17 @@ synch_3 #(
 
 assign joystick_0 = {
     cs_m30_map_enable ? cont1_key_s[10] : cont1_key_s[9],  // Z
-    cs_m30_map_enable ? cont1_key_s[7] : cont1_key_s[6],  // Y
-    cs_m30_map_enable ? cont1_key_s[6] : cont1_key_s[8],  // X
-    cont1_key_s[14], // mode
-    lightgun_enabled ? 0 : cont1_key_s[15], // start
+    cs_m30_map_enable ? cont1_key_s[7]  : cont1_key_s[6],  // Y
+    cs_m30_map_enable ? cont1_key_s[6]  : cont1_key_s[8],  // X
+    cont1_key_s[14],                                       // mode
+    lightgun_enabled  ? cont1_key_s[16] : cont1_key_s[15], // start
     cs_m30_map_enable ? cont1_key_s[11] : cont1_key_s[4],  // B
-    cs_m30_map_enable ? cont1_key_s[5] : cont1_key_s[5],  // C
-    cs_m30_map_enable ? cont1_key_s[4] : cont1_key_s[7],  // A
-    cont1_key_s[0],  // up
-    cont1_key_s[1],  // down
-    cont1_key_s[2],  // left
-    cont1_key_s[3],  // right
+    cs_m30_map_enable ? cont1_key_s[5]  : cont1_key_s[5],  // C
+    cs_m30_map_enable ? cont1_key_s[4]  : cont1_key_s[7],  // A
+    cont1_key_s[0],                                        // up
+    cont1_key_s[1],                                        // down
+    cont1_key_s[2],                                        // left
+    cont1_key_s[3],                                        // right
 };
 
 assign joystick_1 = {
