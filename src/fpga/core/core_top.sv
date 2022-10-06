@@ -466,7 +466,10 @@ always @(posedge clk_74a) begin
         32'h00C00000: cs_cpu_turbo				<= bridge_wr_data[1:0];
         32'h00000000: cs_multitap_enable 	    <= bridge_wr_data[0];
         32'h00000010: cs_ar_correction_enable 	<= bridge_wr_data[0];
-        32'h00000020: cs_composite_enable 		<= bridge_wr_data[0];
+        32'h00000020: begin
+          cs_composite_enable <= bridge_wr_data[0];
+          cs_auto_composite_enable <= bridge_wr_data[1];
+        end
         32'h00000030: cs_obj_limit_high_enable	<= bridge_wr_data[0];
         32'h00000040: cs_fm_enable 				<= bridge_wr_data[0];
         32'h00000050: cs_psg_enable 			<= bridge_wr_data[0];
