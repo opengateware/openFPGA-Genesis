@@ -134,6 +134,7 @@
         "writeonly": true,
         "defaultval": 0,
         "address": "0x00000020",
+        "persist": true,
         "options": [
           {
             "value": 0,
