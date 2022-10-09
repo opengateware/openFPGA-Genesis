@@ -67,7 +67,7 @@ assign SDRAM_nCS = 0;
 assign SDRAM_CKE = 1;
 assign {SDRAM_DQMH,SDRAM_DQML} = SDRAM_A[12:11];
 
-localparam RASCAS_DELAY   = 3'd2; // tRCD=20ns -> 2 cycles@85MHz
+localparam RASCAS_DELAY   = 3'd3; // tRCD=20ns -> 2 cycles@85MHz
 localparam BURST_LENGTH   = 3'd0; // 0=1, 1=2, 2=4, 3=8, 7=full page
 localparam ACCESS_TYPE    = 1'd0; // 0=sequential, 1=interleaved
 localparam CAS_LATENCY    = 3'd2; // 2/3 allowed
@@ -79,7 +79,7 @@ localparam MODE = { 3'b000, NO_WRITE_BURST, OP_MODE, CAS_LATENCY, ACCESS_TYPE, B
 localparam STATE_IDLE  = 3'd0;             // state to check the requests
 localparam STATE_START = STATE_IDLE+1'd1;  // state in which a new command is started
 localparam STATE_CONT  = STATE_START+RASCAS_DELAY;
-localparam STATE_READY = STATE_CONT+CAS_LATENCY+1'd1;
+localparam STATE_READY = STATE_CONT+CAS_LATENCY+2'd2;
 localparam STATE_LAST  = STATE_READY;      // last state in cycle
 
 reg  [2:0] state;
@@ -102,35 +102,14 @@ assign dout2 = dout;
 
 // access manager
 always @(posedge clk) begin
-	reg [9:0] rfs_cnt;
-	reg rfs, rfs2;
-	
-	rfs_cnt <= rfs_cnt + 1'd1;
-	if (rfs_cnt == 850) begin
-		rfs <= 1;
-		rfs_cnt <= 0;
-	end
-
-	if (rfs_cnt == 425) rfs2 <= 1;
-	
 	if(state == STATE_IDLE && mode == MODE_NORMAL) begin
-		if (rfs) begin
-			rfs <= 0;
-			rfs2 <= 0;
-			rfs_cnt <= 0;
-			we <= 0;
-			dqm <= 2'b00;
-			active <= 0;
-			state <= STATE_START;
-		end
-		else if (ack0 != req0) begin
+		if (ack0 != req0) begin
 			{ba,a} <= addr0;
 			data <= din0;
 			we <= wr[0];
 			dqm <= wr[0] ? ~{wrh0,wrl0} : 2'b00;
 			active <= 1;
 			ram_req[0] <= 1;
-			rfs <= rfs2;
 			state <= STATE_START;
 		end
 		else if (ack1 != req1) begin
@@ -140,7 +119,6 @@ always @(posedge clk) begin
 			dqm <= wr[1] ? ~{wrh1,wrl1} : 2'b00;
 			active <= 1;
 			ram_req[1] <= 1;
-			rfs <= rfs2;
 			state <= STATE_START;
 		end
 		else if (ack2 != req2) begin
@@ -150,7 +128,6 @@ always @(posedge clk) begin
 			dqm <= wr[2] ? ~{wrh2,wrl2} : 2'b00;
 			active <= 1;
 			ram_req[2] <= 1;
-			rfs <= rfs2;
 			state <= STATE_START;
 		end
 	end
@@ -210,9 +187,10 @@ always @(posedge clk) begin
 
 	SDRAM_DQ <= 'Z;
 	casex({active,we,mode,state})
-		{2'bXX, MODE_NORMAL, STATE_START}: {SDRAM_nRAS, SDRAM_nCAS, SDRAM_nWE} <= active ? CMD_ACTIVE : CMD_AUTO_REFRESH;
+		{2'b1X, MODE_NORMAL, STATE_START}: {SDRAM_nRAS, SDRAM_nCAS, SDRAM_nWE} <= CMD_ACTIVE;
 		{2'b11, MODE_NORMAL, STATE_CONT }: {SDRAM_nRAS, SDRAM_nCAS, SDRAM_nWE, SDRAM_DQ} <= {CMD_WRITE, data};
 		{2'b10, MODE_NORMAL, STATE_CONT }: {SDRAM_nRAS, SDRAM_nCAS, SDRAM_nWE} <= CMD_READ;
+		{2'b0X, MODE_NORMAL, STATE_START}: {SDRAM_nRAS, SDRAM_nCAS, SDRAM_nWE} <= CMD_AUTO_REFRESH;
 
 		// init
 		{2'bXX,    MODE_LDM, STATE_START}: {SDRAM_nRAS, SDRAM_nCAS, SDRAM_nWE} <= CMD_LOAD_MODE;

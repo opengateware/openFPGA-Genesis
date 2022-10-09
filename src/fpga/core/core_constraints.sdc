@@ -22,14 +22,11 @@ derive_clock_uncertainty
 set_multicycle_path -from {ic|sdram|dout*} -to {ic|system|data*} -setup 2
 set_multicycle_path -from {ic|sdram|dout*} -to {ic|system|data*} -hold 1
 
-set_multicycle_path -from {ic|system|data*} -to [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[0].*|divclk}] -start -setup 2
-set_multicycle_path -from {ic|system|data*} -to [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[0].*|divclk}] -start -hold 1
-
-set_multicycle_path -from [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[0].*|divclk}] -to {ic|system|data*} -setup 2
-set_multicycle_path -from [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[0].*|divclk}] -to {ic|system|data*} -hold 1
-
-set_multicycle_path -from {ic|system|data*} -to [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[1].*|divclk}] -start -setup 2
-set_multicycle_path -from {ic|system|data*} -to [get_clocks {ic|mp1|mf_pllbase_inst|altera_pll_i|*[1].*|divclk}] -start -hold 1
-
-set_multicycle_path -from [get_clocks { ic|mp1|mf_pllbase_inst|altera_pll_i|*[1].*|divclk}] -to {ic|system|data*} -setup 4
-set_multicycle_path -from [get_clocks { ic|mp1|mf_pllbase_inst|altera_pll_i|*[1].*|divclk}] -to {ic|system|data*} -hold 3
+set_multicycle_path -setup -start -from [get_keepers {*fx68k:*|Ir[*]}] -to [get_keepers {*fx68k:*|microAddr[*]}] 2
+set_multicycle_path -hold -start -from [get_keepers {*fx68k:*|Ir[*]}] -to [get_keepers {*fx68k:*|microAddr[*]}] 1
+set_multicycle_path -setup -start -from [get_keepers {*fx68k:*|Ir[*]}] -to [get_keepers {*fx68k:*|nanoAddr[*]}] 2
+set_multicycle_path -hold -start -from [get_keepers {*fx68k:*|Ir[*]}] -to [get_keepers {*fx68k:*|nanoAddr[*]}] 1
+set_multicycle_path -setup -start -from [get_keepers {*|nanoLatch[*]}] -to [get_keepers {*|excUnit|alu|pswCcr[*]}] 2
+set_multicycle_path -hold -start -from [get_keepers {*|nanoLatch[*]}] -to [get_keepers {*|excUnit|alu|pswCcr[*]}] 1
+set_multicycle_path -setup -start -from [get_keepers {*|excUnit|alu|oper[*]}] -to [get_keepers {*|excUnit|alu|pswCcr[*]}] 2
+set_multicycle_path -hold -start -from [get_keepers {*|excUnit|alu|oper[*]}] -to [get_keepers {*|excUnit|alu|pswCcr[*]}] 1

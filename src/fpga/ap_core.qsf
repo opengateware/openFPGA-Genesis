@@ -705,6 +705,11 @@ set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to port_ir_tx
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to port_ir_rx_disable
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to port_ir_rx
 
+# set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to dram_*
+# set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to dram_dq[*]
+# set_instance_assignment -name FAST_INPUT_REGISTER ON -to dram_dq[*]
+# set_instance_assignment -name ALLOW_SYNCH_CTRL_USAGE OFF -to *|dram_*
+
 	# start DESIGN_PARTITION(Top)
 	# ---------------------------
 
@@ -737,11 +742,24 @@ set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 
 # end ENTITY(mf_pllbase_0002)
 # ---------------------------
+
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 4
+# set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
+set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
+set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION ALWAYS
+set_global_assignment -name AUTO_DELAY_CHAINS_FOR_HIGH_FANOUT_INPUT_PINS ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_EFFORT EXTRA
+set_global_assignment -name ALM_REGISTER_PACKING_EFFORT LOW
+# set_global_assignment -name OPTIMIZE_POWER_DURING_SYNTHESIS OFF
+# set_global_assignment -name OPTIMIZE_POWER_DURING_FITTING OFF
+# set_global_assignment -name REMOVE_REDUNDANT_LOGIC_CELLS ON
+# set_global_assignment -name SYNTH_GATED_CLOCK_CONVERSION ON
+# set_global_assignment -name ROUTER_REGISTER_DUPLICATION ON
+set_global_assignment -name SYSTEMVERILOG_FILE core/core_top.sv
 set_global_assignment -name SYSTEMVERILOG_FILE core/data_unloader.sv
 set_global_assignment -name SYSTEMVERILOG_FILE core/data_loader.sv
 set_global_assignment -name SYSTEMVERILOG_FILE core/sync_fifo.sv
 set_global_assignment -name SYSTEMVERILOG_FILE core/sound_i2s.sv
-set_global_assignment -name SYSTEMVERILOG_FILE core/core_top.sv
 set_global_assignment -name QIP_FILE core/rtl/T80/T80.qip
 set_global_assignment -name QIP_FILE core/rtl/SVP/SVP.qip
 set_global_assignment -name QIP_FILE core/rtl/jt89/jt89.qip
@@ -771,18 +789,5 @@ set_global_assignment -name SDC_FILE core/core_constraints.sdc
 set_global_assignment -name SIGNALTAP_FILE core/stp1.stp
 set_global_assignment -name QIP_FILE core/mf_pllbase.qip
 set_global_assignment -name SIP_FILE core/mf_pllbase.sip
-
-set_global_assignment -name NUM_PARALLEL_PROCESSORS 4
-set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
-set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
-set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION ALWAYS
-set_global_assignment -name AUTO_DELAY_CHAINS_FOR_HIGH_FANOUT_INPUT_PINS ON
-set_global_assignment -name PHYSICAL_SYNTHESIS_EFFORT EXTRA
-set_global_assignment -name ALM_REGISTER_PACKING_EFFORT LOW
-set_global_assignment -name OPTIMIZE_POWER_DURING_SYNTHESIS OFF
-set_global_assignment -name OPTIMIZE_POWER_DURING_FITTING OFF
-set_global_assignment -name REMOVE_REDUNDANT_LOGIC_CELLS ON
-# set_global_assignment -name SYNTH_GATED_CLOCK_CONVERSION ON
-set_global_assignment -name ROUTER_REGISTER_DUPLICATION ON
 set_global_assignment -name SLD_FILE db/stp1_auto_stripped.stp
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

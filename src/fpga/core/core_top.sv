@@ -482,9 +482,9 @@ always @(posedge clk_74a) begin
           end
 		32'h00000080: cs_m30_map_enable         <= bridge_wr_data[0];
 		32'h00000090: cs_menu_pause_enable      <= bridge_wr_data[0];
-        32'h00000100: lightgun_enabled <= bridge_wr_data[0];
-        32'h00000104: show_crosshair <= bridge_wr_data[0];
-        32'h00000108: dpad_aim_speed <= bridge_wr_data[7:0];
+        32'h00000100: lightgun_enabled          <= bridge_wr_data[0];
+        32'h00000104: show_crosshair            <= bridge_wr_data[0];
+        32'h00000108: dpad_aim_speed            <= bridge_wr_data[7:0];
       endcase
     end
 end
@@ -587,7 +587,7 @@ reg         ioctl_wait;
 
 wire 		cart_download;
 
-synch_2 cart_download_s (
+synch_3 cart_download_s (
 	ioctl_download & bridge_addr[31:28] == 4'h1,
 	cart_download,
 	clk_sys
@@ -653,7 +653,7 @@ data_loader #(
 	.ADDRESS_MASK_UPPER_4(4'h1),
     .ADDRESS_SIZE(25),
 	.WRITE_MEM_CLOCK_DELAY(12),
-	.WRITE_MEM_EN_CYCLE_LENGTH(4),
+	.WRITE_MEM_EN_CYCLE_LENGTH(2),
 	.OUTPUT_WORD_SIZE(2)
 ) rom_loader (
     .clk_74a(clk_74a),
@@ -845,13 +845,13 @@ sdram sdram
 	.req1(rom_req),
 	.ack1(sdrom_rdack),
 
-	.addr2(rom_addr2),
-	.din2(rom_wdata),
-	.dout2(rom_data2),
-	.wrl2(0),
-	.wrh2(0),
-	.req2(rom_rd2),
-	.ack2(rom_rdack2),
+	// .addr2(rom_addr2),
+	// .din2(rom_wdata),
+	// .dout2(rom_data2),
+	// .wrl2(0),
+	// .wrh2(0),
+	// .rd2(rom_rd2),
+	// .busy2(rom_rdack2),
 
 	.SDRAM_DQ(dram_dq),         // 16 bit bidirectional data bus
 	.SDRAM_A(dram_a),           // 13 bit multiplexed address bus
@@ -974,7 +974,7 @@ wire [31:0] cont3_key_s;
 wire [31:0] cont4_key_s;
 wire [31:0] cont1_joy_s;
 
-synch_2 #(
+synch_3 #(
     .WIDTH(32)
 ) cont1_s (
     cont1_key,
@@ -982,7 +982,7 @@ synch_2 #(
     clk_sys
 );
 
-synch_2 #(
+synch_3 #(
     .WIDTH(32)
 ) cont2_s (
     cont2_key,
@@ -990,7 +990,7 @@ synch_2 #(
     clk_sys
 );
 
-synch_2 #(
+synch_3 #(
     .WIDTH(32)
 ) cont3_s (
     cont3_key,
@@ -998,7 +998,7 @@ synch_2 #(
     clk_sys
 );
 
-synch_2 #(
+synch_3 #(
     .WIDTH(32)
 ) cont4_s (
     cont4_key,
@@ -1132,7 +1132,7 @@ synch_3 pause_s (
 	clk_sys
 );
 
-wire reset = ~reset_n | region_set;
+wire reset = ~reset_n | cart_download | region_set;
 
 system system
 (
