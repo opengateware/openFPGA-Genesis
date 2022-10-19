@@ -19,6 +19,11 @@ set_clock_groups -asynchronous \
 
 derive_clock_uncertainty
 
+set_false_path -to [get_ports {dram_clk}]
+
+set_multicycle_path -from {ic|mp1|mf_pllbase_inst|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk} -to {ic|mp1|mf_pllbase_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk} -setup 2
+set_multicycle_path -from {ic|mp1|mf_pllbase_inst|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk} -to {ic|mp1|mf_pllbase_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk} -hold 1
+
 set_multicycle_path -from {ic|sdram|dout*} -to {ic|system|data*} -setup 2
 set_multicycle_path -from {ic|sdram|dout*} -to {ic|system|data*} -hold 1
 

@@ -705,10 +705,10 @@ set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to port_ir_tx
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to port_ir_rx_disable
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to port_ir_rx
 
-# set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to dram_*
-# set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to dram_dq[*]
-# set_instance_assignment -name FAST_INPUT_REGISTER ON -to dram_dq[*]
-# set_instance_assignment -name ALLOW_SYNCH_CTRL_USAGE OFF -to *|dram_*
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to dram_*
+set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to dram_dq[*]
+set_instance_assignment -name FAST_INPUT_REGISTER ON -to dram_dq[*]
+set_instance_assignment -name ALLOW_SYNCH_CTRL_USAGE OFF -to *|dram_*
 
 	# start DESIGN_PARTITION(Top)
 	# ---------------------------

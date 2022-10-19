@@ -68,9 +68,9 @@ assign SDRAM_CKE = 1;
 assign {SDRAM_DQMH,SDRAM_DQML} = SDRAM_A[12:11];
 
 localparam RASCAS_DELAY   = 3'd3; // tRCD=20ns -> 2 cycles@85MHz
-localparam BURST_LENGTH   = 3'd0; // 0=1, 1=2, 2=4, 3=8, 7=full page
+localparam BURST_LENGTH   = 3'd1; // 0=1, 1=2, 2=4, 3=8, 7=full page
 localparam ACCESS_TYPE    = 1'd0; // 0=sequential, 1=interleaved
-localparam CAS_LATENCY    = 3'd2; // 2/3 allowed
+localparam CAS_LATENCY    = 3'd3; // 2/3 allowed
 localparam OP_MODE        = 2'd0; // only 0 (standard operation) allowed
 localparam NO_WRITE_BURST = 1'd1; // 0=write burst enabled, 1=only single access write
 
@@ -79,7 +79,7 @@ localparam MODE = { 3'b000, NO_WRITE_BURST, OP_MODE, CAS_LATENCY, ACCESS_TYPE, B
 localparam STATE_IDLE  = 3'd0;             // state to check the requests
 localparam STATE_START = STATE_IDLE+1'd1;  // state in which a new command is started
 localparam STATE_CONT  = STATE_START+RASCAS_DELAY;
-localparam STATE_READY = STATE_CONT+CAS_LATENCY+2'd2;
+localparam STATE_READY = STATE_CONT+CAS_LATENCY+1'd1;
 localparam STATE_LAST  = STATE_READY;      // last state in cycle
 
 reg  [2:0] state;

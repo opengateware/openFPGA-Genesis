@@ -62,7 +62,7 @@ endmodule
 // Retrieval info: 	<generic name="device_family" value="Cyclone V" />
 // Retrieval info: 	<generic name="device" value="5CEBA2F17A7" />
 // Retrieval info: 	<generic name="gui_device_speed_grade" value="2" />
-// Retrieval info: 	<generic name="gui_pll_mode" value="Fractional-N PLL" />
+// Retrieval info: 	<generic name="gui_pll_mode" value="Integer-N PLL" />
 // Retrieval info: 	<generic name="gui_reference_clock_frequency" value="74.25" />
 // Retrieval info: 	<generic name="gui_channel_spacing" value="0.0" />
 // Retrieval info: 	<generic name="gui_operation_mode" value="direct" />

@@ -1015,14 +1015,14 @@ synch_3 #(
 );
 
 assign joystick_0 = {
-    cs_m30_map_enable ? cont1_key_s[10] : cont1_key_s[9],  // Z
-    cs_m30_map_enable ? cont1_key_s[7]  : cont1_key_s[6],  // Y
-    cs_m30_map_enable ? cont1_key_s[6]  : cont1_key_s[8],  // X
-    cont1_key_s[14],                                       // mode
-    lightgun_enabled  ? 1'b0            : cont1_key_s[15], // start
-    cs_m30_map_enable ? cont1_key_s[11] : cont1_key_s[4],  // B
-    cs_m30_map_enable ? cont1_key_s[5]  : cont1_key_s[5],  // C
-    cs_m30_map_enable ? cont1_key_s[4]  : cont1_key_s[7],  // A
+    cont1_key_s[9],  // Z
+    cont1_key_s[6],  // Y
+    cont1_key_s[8],  // X
+    cont1_key_s[14], // mode
+    lightgun_enabled  ? 1'b0 : cont1_key_s[15], // start
+    cont1_key_s[4],  // B
+    cont1_key_s[5],  // C
+    cont1_key_s[7],  // A
     cont1_key_s[0],                                        // up
     cont1_key_s[1],                                        // down
     cont1_key_s[2],                                        // left
@@ -1030,14 +1030,14 @@ assign joystick_0 = {
 };
 
 assign joystick_1 = {
-    cs_m30_map_enable ? cont2_key_s[10] : cont2_key_s[9],  // Z
-    cs_m30_map_enable ? cont2_key_s[7] : cont2_key_s[6],  // Y
-    cs_m30_map_enable ? cont2_key_s[6] : cont2_key_s[8],  // X
+    cont2_key_s[9],  // Z
+    cont2_key_s[6],  // Y
+    cont2_key_s[8],  // X
     cont2_key_s[14], // mode
     cont2_key_s[15], // start
-    cs_m30_map_enable ? cont2_key_s[11] : cont2_key_s[4],  // B
-    cs_m30_map_enable ? cont2_key_s[5] : cont2_key_s[5],  // C
-    cs_m30_map_enable ? cont2_key_s[4] : cont2_key_s[7],  // A
+    cont2_key_s[4],  // B
+    cont2_key_s[5],  // C
+    cont2_key_s[7],  // A
     cont2_key_s[0],  // up
     cont2_key_s[1],  // down
     cont2_key_s[2],  // left
@@ -1045,14 +1045,14 @@ assign joystick_1 = {
 };
 
 assign joystick_2 = {
-    cs_m30_map_enable ? cont3_key_s[10] : cont3_key_s[9],  // Z
-    cs_m30_map_enable ? cont3_key_s[7] : cont3_key_s[6],  // Y
-    cs_m30_map_enable ? cont3_key_s[6] : cont3_key_s[8],  // X
+    cont3_key_s[9],  // Z
+    cont3_key_s[6],  // Y
+    cont3_key_s[8],  // X
     cont3_key_s[14], // mode
     cont3_key_s[15], // start
-    cs_m30_map_enable ? cont3_key_s[11] : cont3_key_s[4],  // B
-    cs_m30_map_enable ? cont3_key_s[5] : cont3_key_s[5],  // C
-    cs_m30_map_enable ? cont3_key_s[4] : cont3_key_s[7],  // A
+    cont3_key_s[4],  // B
+    cont3_key_s[5],  // C
+    cont3_key_s[7],  // A
     cont3_key_s[0],  // up
     cont3_key_s[1],  // down
     cont3_key_s[2],  // left
@@ -1060,14 +1060,14 @@ assign joystick_2 = {
 };
 
 assign joystick_3 = {
-    cs_m30_map_enable ? cont4_key_s[10] : cont4_key_s[9],  // Z
-    cs_m30_map_enable ? cont4_key_s[7] : cont4_key_s[6],  // Y
-    cs_m30_map_enable ? cont4_key_s[6] : cont4_key_s[8],  // X
+    cont4_key_s[9],  // Z
+    cont4_key_s[6],  // Y
+    cont4_key_s[8],  // X
     cont4_key_s[14], // mode
     cont4_key_s[15], // start
-    cs_m30_map_enable ? cont4_key_s[11] : cont4_key_s[4],  // B
-    cs_m30_map_enable ? cont4_key_s[5] : cont4_key_s[5],  // C
-    cs_m30_map_enable ? cont4_key_s[4] : cont4_key_s[7],  // A
+    cont4_key_s[4],  // B
+    cont4_key_s[5],  // C
+    cont4_key_s[7],  // A
     cont4_key_s[0],  // up
     cont4_key_s[1],  // down
     cont4_key_s[2],  // left
