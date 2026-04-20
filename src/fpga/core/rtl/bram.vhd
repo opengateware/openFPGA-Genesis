@@ -76,7 +76,7 @@ BEGIN
 		clock_enable_input_a => "BYPASS",
 		clock_enable_output_a => "BYPASS",
 		intended_device_family => "Cyclone V",
-		lpm_hint => "ENABLE_RUNTIME_MOD=YES,INSTANCE_NAME="&mem_name,
+		lpm_hint => "UNUSED",
 		lpm_type => "altsyncram",
 		numwords_a => numwords,
 		operation_mode => "SINGLE_PORT",
@@ -324,4 +324,3 @@ BEGIN
 	);
 
 END SYN;
-
