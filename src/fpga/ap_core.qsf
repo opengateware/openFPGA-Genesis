@@ -747,7 +747,6 @@ set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 
 set_global_assignment -name NUM_PARALLEL_PROCESSORS 1
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
-set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 2.0
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION ALWAYS
 set_global_assignment -name AUTO_DELAY_CHAINS_FOR_HIGH_FANOUT_INPUT_PINS ON
