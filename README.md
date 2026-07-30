@@ -17,3 +17,27 @@ All rights reserved
 ## Important to read this first!
 - This core is far from complete and I am aware of most issues.
 - No PAL.
+
+## Building
+
+If you don't want to install Intel Quartus on your system, you can use Docker to
+build everything in isolation.
+
+First, [install Docker](https://docs.docker.com/get-started/get-docker/) of course.
+
+Next, from the root of this checkout, compile the core.
+NB: Depending on the speed of your machine, this can take a while, easily 30min+.
+
+```
+$ cd src/fpga
+$ docker run --rm -v .:/build raetro/quartus:21.1 quartus_sh --flow compile ap_core
+```
+
+Now reverse the bitstream, and copy it to the output.
+
+```
+$ ./output_files/reverse_bits.py output_files/ap_core.rbf ../../dist/Cores/ericlewis.Genesis/bitstream.rbf_r
+```
+
+Now you can zip up the dist/ tree, or manually install those files to your
+Pocket's SD card.
