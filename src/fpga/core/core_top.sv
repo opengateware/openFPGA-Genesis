@@ -326,9 +326,9 @@ end
     
 // bridge host commands
 // synchronous to clk_74a
-    wire            status_boot_done = pll_core_locked; 
-    wire            status_setup_done = pll_core_locked; // rising edge triggers a target command
-    wire            status_running = reset_n; // we are running as soon as reset_n goes high
+	    wire            status_boot_done = pll_core_locked; 
+	    wire            status_setup_done;
+	    wire            status_running;
 
     wire            dataslot_requestread;
     wire    [15:0]  dataslot_requestread_id;
@@ -509,6 +509,7 @@ wire [15:0] sd_buff_dout;
 
 reg [ 2:0] datatable_div = 0;
 reg [31:0] rom_file_size = 0;
+wire [31:0] save_file_size_74a;
 
 always @(posedge clk_74a or negedge pll_core_locked) begin
 	if (~pll_core_locked) begin
@@ -519,8 +520,7 @@ always @(posedge clk_74a or negedge pll_core_locked) begin
 		if (datatable_div > 4) begin
 			// Write sram size half of the time
 			datatable_wren <= 1;
-			// sram_size is the size of the config value in the ROM. Convert to actual size
-			datatable_data <= 32'd65536;
+			datatable_data <= save_file_size_74a;
 			// Data slot index 1, not id 1
 			datatable_addr <= 1 * 2 + 1;
 		end else begin
@@ -579,23 +579,32 @@ data_loader #(
 // ROM
 ///////////////////////////////////////////////
 
-reg         ioctl_download = 0;
 wire        ioctl_wr;
 wire [24:0] ioctl_addr;
 wire [15:0] ioctl_data;
 reg         ioctl_wait;
+reg         cart_download_active_74a = 0;
 
 wire 		cart_download;
 
 synch_3 cart_download_s (
-	ioctl_download & bridge_addr[31:28] == 4'h1,
+	cart_download_active_74a,
 	cart_download,
 	clk_sys
 );
 
-always @(posedge clk_74a) begin
-    if (dataslot_requestwrite) ioctl_download <= 1;
-    else if (dataslot_allcomplete) ioctl_download <= 0;
+always @(posedge clk_74a or negedge pll_core_locked) begin
+    if (~pll_core_locked) begin
+        cart_download_active_74a <= 0;
+    end else begin
+        if (dataslot_requestwrite && dataslot_requestwrite_id == 16'd0) begin
+            cart_download_active_74a <= 1;
+        end
+
+        if (dataslot_allcomplete) begin
+            cart_download_active_74a <= 0;
+        end
+    end
 end
 
 wire sdrom_wrack;
@@ -620,14 +629,87 @@ wire [3:0] hrgn = ioctl_data[3:0] - 4'd7;
 
 reg cart_hdr_ready = 0;
 reg hdr_j=0,hdr_u=0,hdr_e=0;
+reg [63:0] cart_id = 0;
+reg        header_has_backup = 0;
+reg  [7:0] header_extra_mem_type = 0;
+reg  [7:0] header_extra_mem_kind = 0;
+reg [31:0] header_save_start = 0;
+reg [31:0] header_save_end = 0;
+wire       header_is_backup = header_extra_mem_type[6];
+wire       header_is_sram = header_has_backup && header_is_backup && header_extra_mem_kind[7:5] == 3'b001;
+wire       header_is_eeprom = header_has_backup && header_is_backup && header_extra_mem_kind[7:5] == 3'b010;
+wire       header_has_valid_range = header_save_end >= header_save_start;
+wire [1:0] header_ram_lane_mode = header_extra_mem_type[4:3];
+wire       header_sram_half_lane = header_ram_lane_mode == 2'b10 || header_ram_lane_mode == 2'b11;
+wire [31:0] header_save_size_raw = header_has_valid_range ? (header_save_end - header_save_start + 1) : 32'd0;
+wire [31:0] header_save_size_half_lane = header_has_valid_range ? (((header_save_end - header_save_start) >> 1) + 1) : 32'd0;
+wire [31:0] header_sram_save_size =
+	header_save_start == 32'h00FF0000 ? 32'd0 :
+	header_save_start >= 32'h00800000 ? 32'd65536 :
+	(header_sram_half_lane ? header_save_size_half_lane : header_save_size_raw) == 32'd0 ? 32'd65536 :
+	(header_sram_half_lane ? header_save_size_half_lane : header_save_size_raw) > 32'd65536 ? 32'd65536 :
+	(header_sram_half_lane ? header_save_size_half_lane : header_save_size_raw);
+reg [31:0] save_file_size_sys = 0;
+
+always @(*) begin
+	save_file_size_sys = 32'd65536;
+
+	if (noram_quirk) begin
+		save_file_size_sys = 32'd0;
+	end else if (pier_quirk) begin
+		save_file_size_sys = 32'd4096;
+	end else if (sram_quirk) begin
+		case (cart_id)
+			"T-081276": save_file_size_sys = 32'd256;   // NFL Quarterback Club (24C02)
+			"T-81406 ": save_file_size_sys = 32'd256;   // NBA Jam TE (24C02)
+			"T-081586": save_file_size_sys = 32'd2048;  // NFL Quarterback Club '96 (24C16)
+			"T-81576 ": save_file_size_sys = 32'd8192;  // College Slam (24C64)
+			"T-81476 ": save_file_size_sys = 32'd8192;  // Frank Thomas Big Hurt Baseball (24C64)
+			default:    save_file_size_sys = 32'd65536;
+		endcase
+	end else if (eeprom_quirk || header_is_eeprom) begin
+		save_file_size_sys = 32'd128; // Default 24C01 footprint for the Sega-style EEPROM carts this core recognizes
+	end else if (header_is_sram) begin
+		save_file_size_sys = header_sram_save_size;
+	end
+end
+
+synch_3 #(
+	.WIDTH(32)
+) save_file_size_sync (
+	save_file_size_sys,
+	save_file_size_74a,
+	clk_74a
+);
+
 always @(posedge clk_sys) begin
 	reg old_download;
 	old_download <= cart_download;
 
-	if(~old_download && cart_download) {hdr_j,hdr_u,hdr_e} <= 0;
+	if(~old_download && cart_download) begin
+		{hdr_j,hdr_u,hdr_e} <= 0;
+		cart_hdr_ready <= 0;
+		header_has_backup <= 0;
+		header_extra_mem_type <= 0;
+		header_extra_mem_kind <= 0;
+		header_save_start <= 0;
+		header_save_end <= 0;
+	end
 	if(old_download && ~cart_download) cart_hdr_ready <= 0;
 
 	if(ioctl_wr & cart_download) begin
+		if(ioctl_addr == 'h1B0) begin
+			header_has_backup <= ioctl_data[7:0] == "R" && ioctl_data[15:8] == "A";
+		end
+		if(ioctl_addr == 'h1B2) begin
+			header_extra_mem_type <= ioctl_data[7:0];
+			header_extra_mem_kind <= ioctl_data[15:8];
+		end
+		if(ioctl_addr == 'h1B4) header_save_start[31:16] <= {ioctl_data[7:0], ioctl_data[15:8]};
+		if(ioctl_addr == 'h1B6) header_save_start[15:0]  <= {ioctl_data[7:0], ioctl_data[15:8]};
+		if(ioctl_addr == 'h1B8) header_save_end[31:16]   <= {ioctl_data[7:0], ioctl_data[15:8]};
+		if(ioctl_addr == 'h1BA) header_save_end[15:0]    <= {ioctl_data[7:0], ioctl_data[15:8]};
+
 		if(ioctl_addr == 'h1F0) begin
 			if(ioctl_data[7:0] == "J") hdr_j <= 1;
 			else if(ioctl_data[7:0] == "U") hdr_u <= 1;
@@ -884,9 +966,11 @@ reg lightgun_type = 0;
 reg [7:0] lightgun_sensor_delay = 8'd44;
 
 always @(posedge clk_sys) begin
-	reg [63:0] cart_id;
-	
-	if(cart_download) begin
+	reg old_download = 0;
+
+	old_download <= cart_download;
+	if(~old_download && cart_download) begin
+		cart_id <= 0;
 		{
 			fifo_quirk,
 			eeprom_quirk,
@@ -898,6 +982,8 @@ always @(posedge clk_sys) begin
 			fmbusy_quirk,
 			schan_quirk
 		} <= 0;
+		lightgun_type <= 0;
+		lightgun_sensor_delay <= 8'd44;
 	end
 
 	if(ioctl_wr & cart_download) begin
@@ -1132,11 +1218,57 @@ synch_3 pause_s (
 	clk_sys
 );
 
-wire reset = ~reset_n | cart_download | region_set;
+wire        reset_n_sys;
+wire        reset_delay_active_74a = |reset_delay;
+wire        reset_delay_active_sys;
+wire        system_reset_n_sys;
+wire        system_setup_done_sys;
+wire        system_reset_n_74a;
+wire        system_setup_done_74a;
+wire        reset = ~system_reset_n_sys;
+
+synch_3 reset_n_sys_s (
+	reset_n,
+	reset_n_sys,
+	clk_sys
+);
+
+synch_3 reset_delay_sys_s (
+	reset_delay_active_74a,
+	reset_delay_active_sys,
+	clk_sys
+);
+
+assign system_reset_n_sys =
+	reset_n_sys &&
+	pll_core_locked &&
+	!cart_download &&
+	!region_set &&
+	!reset_delay_active_sys;
+
+assign system_setup_done_sys =
+	pll_core_locked &&
+	!cart_download &&
+	!region_set;
+
+synch_3 status_running_s (
+	system_reset_n_sys,
+	system_reset_n_74a,
+	clk_74a
+);
+
+synch_3 status_setup_done_s (
+	system_setup_done_sys,
+	system_setup_done_74a,
+	clk_74a
+);
+
+assign status_running = system_reset_n_74a;
+assign status_setup_done = system_setup_done_74a;
 
 system system
 (
-	.RESET_N(~reset && !reset_delay),
+	.RESET_N(system_reset_n_sys),
 	.MCLK(clk_sys),
 
 	.LOADING(cart_download),
