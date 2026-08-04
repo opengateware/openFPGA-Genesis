@@ -451,6 +451,7 @@ reg [1:0] cs_audio_filter	 	 = 0;
 reg cs_fm_chip	 		 		 = 0;
 
 // Input
+reg swap_controllers             = 0;
 reg cs_m30_map_enable            = 0;
 reg lightgun_enabled             = 0;
 reg show_crosshair               = 1;
@@ -481,6 +482,7 @@ always @(posedge clk_74a) begin
             if (bridge_wr_data[31:0] > 0) reset_delay <= {reset_counter, 4'b1111};
           end
 		32'h00000080: cs_m30_map_enable         <= bridge_wr_data[0];
+        32'h00000084: swap_controllers          <= bridge_wr_data[0];
 		32'h00000090: cs_menu_pause_enable      <= bridge_wr_data[0];
         32'h00000100: lightgun_enabled          <= bridge_wr_data[0];
         32'h00000104: show_crosshair            <= bridge_wr_data[0];
@@ -973,6 +975,8 @@ wire [31:0] cont2_key_s;
 wire [31:0] cont3_key_s;
 wire [31:0] cont4_key_s;
 wire [31:0] cont1_joy_s;
+wire [31:0] p1_key_s;
+wire [31:0] p2_key_s;
 
 synch_3 #(
     .WIDTH(32)
@@ -1014,34 +1018,37 @@ synch_3 #(
     clk_sys
 );
 
+assign p1_key_s = swap_controllers ? cont2_key_s : cont1_key_s;
+assign p2_key_s = swap_controllers ? cont1_key_s : cont2_key_s;
+
 assign joystick_0 = {
-    cont1_key_s[9],  // Z
-    cont1_key_s[6],  // Y
-    cont1_key_s[8],  // X
-    cont1_key_s[14], // mode
-    lightgun_enabled  ? 1'b0 : cont1_key_s[15], // start
-    cont1_key_s[4],  // B
-    cont1_key_s[5],  // C
-    cont1_key_s[7],  // A
-    cont1_key_s[0],                                        // up
-    cont1_key_s[1],                                        // down
-    cont1_key_s[2],                                        // left
-    cont1_key_s[3],                                        // right
+    p1_key_s[9],  // Z
+    p1_key_s[6],  // Y
+    p1_key_s[8],  // X
+    p1_key_s[14], // mode
+    lightgun_enabled  ? 1'b0 : p1_key_s[15], // start
+    p1_key_s[4],  // B
+    p1_key_s[5],  // C
+    p1_key_s[7],  // A
+    p1_key_s[0],                                        // up
+    p1_key_s[1],                                        // down
+    p1_key_s[2],                                        // left
+    p1_key_s[3],                                        // right
 };
 
 assign joystick_1 = {
-    cont2_key_s[9],  // Z
-    cont2_key_s[6],  // Y
-    cont2_key_s[8],  // X
-    cont2_key_s[14], // mode
-    cont2_key_s[15], // start
-    cont2_key_s[4],  // B
-    cont2_key_s[5],  // C
-    cont2_key_s[7],  // A
-    cont2_key_s[0],  // up
-    cont2_key_s[1],  // down
-    cont2_key_s[2],  // left
-    cont2_key_s[3],  // right
+    p2_key_s[9],  // Z
+    p2_key_s[6],  // Y
+    p2_key_s[8],  // X
+    p2_key_s[14], // mode
+    p2_key_s[15], // start
+    p2_key_s[4],  // B
+    p2_key_s[5],  // C
+    p2_key_s[7],  // A
+    p2_key_s[0],  // up
+    p2_key_s[1],  // down
+    p2_key_s[2],  // left
+    p2_key_s[3],  // right
 };
 
 assign joystick_2 = {

@@ -66,6 +66,17 @@
         "value": 1
       },
       {
+        "name": "Swap P1 & P2",
+        "id": 400,
+        "type": "check",
+        "enabled": true,
+        "persist": false,
+        "address": "0x00000084",
+        "writeonly": true,
+        "defaultval": 0,
+        "value": 1
+      },
+      {
         "name": "Lightgun",
         "id": 70,
         "type": "check",
