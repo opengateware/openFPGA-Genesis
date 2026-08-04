@@ -1,0 +1,52 @@
+################################################################################
+# How to create a tag to launch the workflow
+# git tag -a "0.1.0" -m "Release v0.1.0"
+# git push origin --tags
+################################################################################
+# WARNING: Make sure to set action permissions to max ("Read and write permissions")
+name: Build/Release
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  synthesis:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Compile
+        shell: bash
+        run: |
+          cd src/fpga
+          docker run --rm -v .:/build raetro/quartus:21.1 quartus_sh --flow compile ap_core
+
+      - name: Reverse bitstream
+        shell: bash
+        run: |
+          src/fpga/output_files/reverse_bits.py \
+            src/fpga/output_files/ap_core.rbf \
+            dist/Cores/ericlewis.Genesis/bitstream.rbf_r
+
+      - name: Create release
+        shell: bash
+        run: |
+          cd dist
+          version=$(jq -r .core.metadata.version Cores/ericlewis.Genesis/core.json)
+          date=$(date +%Y-%m-%d)
+          zip -r ../ericlewis.Genesis_${version}_${date}.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          path: ./*.zip
